@@ -4,3 +4,4 @@ Copy this file to `docs/kiro-log.md` in the Rehearsal repository (only if that f
 
 | Date | Surface / model | Task (spec, task number) | Files or commit | Verify command and result | Credits | What changed because of a failure |
 | --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-16 | Kiro CLI 3.3.0, model auto | simulation-contract, spec review (prompt B) and review findings | `.kiro/specs/simulation-contract/requirements.md`, `design.md`, `tasks.md`; `.kiro/steering/units-and-determinism.md`, `.kiro/steering/model-limits.md`; `.kiro/hooks/README.md`, `.kiro/hooks/verify-on-stop.json`; `plans/plan-notes.md`; `docs/kiro-log.md` | none (no code) |  | none; findings: 19 applied, 41 skipped |

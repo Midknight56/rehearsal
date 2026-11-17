@@ -2,7 +2,7 @@
 
 ## Overview
 
-`simulation-contract` is spec 11.1 of `plans/rehearsal-implementation-plan.md`: the Kiro-owned engine that turns a validated `Scenario` into a `RunResult`, implemented November 4–11 on branch `kiro/simulation-contract` under a 550-credit cap and accepted at the November 11 gate as package R1. It delivers four source folders (`src/domain/`, `src/simulation/`, `src/spatial/`, `src/workers/`), the test suite `tests/model/`, the regression snapshot `public/examples/harbor-hall/expected.json` and `docs/model-contract.md`. The fleet-built editor, replay, comparison and exports consume its outputs through two entry points only: `simulate(scenario, replication, options)` and the worker adapter `createSimulationClient()`.
+`simulation-contract` is spec 11.1 of `plans/rehearsal-implementation-plan.md`: the Kiro-owned engine that turns a validated `Scenario` into a `RunResult`, implemented November 4–11 on branch `kiro/simulation-contract` under a 550-credit cap and accepted at the November 11 gate as package R1. It delivers four source folders (`src/domain/`, `src/simulation/`, `src/spatial/`, `src/workers/`), the test suite `tests/model/`, the regression snapshot `public/examples/harbor-hall/expected.json` and `docs/model-contract.md`. The editor, replay, comparison and exports built by later specs consume its outputs through two entry points only: `simulate(scenario, replication, options)` and the worker adapter `createSimulationClient()`.
 
 Design rules carried from plan sections 5–7: time is integer milliseconds and converts from display units exactly once; `simulate` is free of DOM, wall-clock time, rendering and storage; every random draw comes from a local generator keyed by purpose (`baseSeed|replication|attendeeId|stationId|service`, `baseSeed|replication|attendeeId|arrival`) and `Math.random` is never used; equal-time events are batched before dispatch; grid paths have a mathematical effect on queue arrival times; every metric carries unit, population and denominator and renders `—` when undefined; the worker adapter owns cancellation and progress; nothing in this spec advances model state from a ticker or a camera.
 
@@ -30,7 +30,7 @@ The worker protocol wraps the same pipeline. The adapter on the main thread owns
 
 ```mermaid
 sequenceDiagram
-  participant UI as src/ui (fleet)
+  participant UI as src/ui (a later spec)
   participant C as client.ts (adapter, main thread)
   participant W as simulation.worker.ts
   UI->>C: run(scenario, [0..29], { trace: false })
@@ -53,7 +53,7 @@ sequenceDiagram
   end
 ```
 
-Ownership: every file below is written only in Kiro CLI sessions under this spec. The `Scenario` type in `src/domain/scenario.ts` is integrator-controlled after R0; a change to it is requested from the integrator with a one-line logged request. No file here imports from `src/ui`, `src/replay`, `src/imports`, `src/storage`, `src/comparison` or `src/exports`.
+Ownership: every file below is written by Kiro under this spec, on top of the scaffold of task 0 (`package.json`, lockfile, `vite.config.ts`, `src/main.tsx`, `src/app.tsx` and the `Scenario` types). A later change to the `Scenario` type follows plan section 5 and gets its own log row. No file here imports from `src/ui`, `src/replay`, `src/imports`, `src/storage`, `src/comparison` or `src/exports`.
 
 ## Components and Interfaces
 
@@ -64,7 +64,7 @@ src/domain/
   scenario.ts            Scenario, Layout, Station, Cohort, Service, Cell types; ScenarioSchema (zod)
   limits.ts              LIMITS, DRAIN_CAP_MS
   validate.ts            validateScenario, toDurationMs, ValidationIssue, MESSAGES
-  hash.ts                canonicalJson, scenarioHash
+  hash.ts                stableJson, canonicalJson, scenarioHash
 src/simulation/
   version.ts             MODEL_VERSION
   random.ts              createGenerator, serviceKey, arrivalKey
@@ -78,7 +78,7 @@ src/simulation/
   simulate.ts            simulate, RunResult, ScenarioInvalidError
 src/spatial/
   grid.ts                findPath (BFS), pathDistanceM, walkDurationMs, isInBounds, isBlocked
-  path-cache.ts          createPathCache, layoutKey, nodeCell, describeNode
+  path-cache.ts          createPathCache, nodeCell, describeNode
 src/workers/
   protocol.ts            ToWorker, FromWorker, ToWorkerSchema, FromWorkerSchema
   simulation.worker.ts   worker entry: createWorkerHandler wired to self.onmessage
@@ -91,7 +91,7 @@ docs/model-contract.md
 ### Domain: schema, limits, validation, hash
 
 ```ts
-// src/domain/scenario.ts  (verbatim from plan section 5; integrator-controlled after R0)
+// src/domain/scenario.ts  (verbatim from plan section 5; created in task 0)
 export type Cell = [number, number];                       // [x, y]; x grows east, y grows south
 export type Service =
   | { kind: 'constant'; seconds: number }
@@ -131,11 +131,12 @@ export function toDurationMs(seconds: number): number;                // Math.ma
 export const MESSAGES: Record<IssueCode, (args: Record<string, string | number>) => string>;
 
 // src/domain/hash.ts
-export function canonicalJson(scenario: Scenario): string;            // excludes id, revision, title, notes
+export function stableJson(value: unknown): string;                  // JSON with keys sorted at every object level; arrays keep their order; used by canonicalJson and the path-cache key
+export function canonicalJson(scenario: Scenario): string;            // drops only the top-level id, revision, title, notes (station and cohort ids stay)
 export function scenarioHash(scenario: Scenario): Promise<string>;   // lowercase hex SHA-256, globalThis.crypto.subtle
 ```
 
-Validation runs in five passes and collects every issue instead of stopping at the first: (1) structural, through `ScenarioSchema` (wrong types, missing fields, `schemaVersion`, `modelVersion` format, non-finite numbers); (2) limits from `LIMITS`; (3) identifiers (format, duplicates, route references and repeats, attendee total); (4) geometry (bounds, blocked cells, duplicates); (5) reachability through `createPathCache`, which also reports `UNSAFE_MS` when a computed walking duration is not a safe integer. Passes 4 and 5 run only when passes 1–3 found no issue, because an out-of-bounds cell makes the BFS meaningless. `canonicalJson` serializes with keys sorted at every object level, `stations` and `cohorts` sorted by `id` in code-unit order and `blockedCells` sorted by `x` then `y`; the hash is the SHA-256 of its UTF-8 bytes. Node 22.12+ exposes `globalThis.crypto.subtle` in the Vitest Node environment (*verify* at scaffold; the fallback is `node:crypto`'s `webcrypto` in the test helper only).
+Validation runs in five passes and collects every issue instead of stopping at the first: (1) structural, through `ScenarioSchema` (wrong types, missing fields, `schemaVersion`, `modelVersion` format, non-finite numbers); (2) limits from `LIMITS` (`horizonMs`, `startMs`, `endMs`, `cols` and `rows` must be whole numbers; a fractional value is reported under the range code of its field); (3) identifiers (format, duplicates, route references and repeats, attendee total); (4) geometry (bounds and whole-number coordinates, blocked cells, duplicates); (5) reachability through `createPathCache`, of whose unreachable pairs only those of requirement 1.8 (entrance to each station and to the exit, each consecutive pair of each cohort route) become issues, each reported once, and which also reports `UNSAFE_MS` when a computed walking duration is not a safe integer. Passes 4 and 5 run only when passes 1–3 found no issue, because an out-of-bounds cell makes the BFS meaningless. `canonicalJson` drops the four top-level fields `id`, `revision`, `title` and `notes` (never a station or cohort `id`) and serializes the rest through `stableJson` with keys sorted at every object level, `stations` and `cohorts` sorted by `id` in code-unit order and `blockedCells` sorted by `x` then `y`; the hash is the SHA-256 of its UTF-8 bytes. Node 22.12+ exposes `globalThis.crypto.subtle` in the Vitest Node environment (*verify* at scaffold; the fallback is `node:crypto`'s `webcrypto` in the test helper only).
 
 ### Arrivals, random streams and sampling
 
@@ -219,12 +220,12 @@ export function runSchedule(input: ScheduleInput): ScheduleOutput;
 
 1. Build one `AttendeeRecord` per compiled attendee (`state: 'pending'`), one line and one `busy: boolean[]` of length `servers` per station (all free), the counters `admitted`, `walking`, `waiting`, `inService`, `exited` at 0, and `capMs = horizonMs + drainCapMs`. Push an `external-arrival` for every attendee at its `arrivalMs`.
 2. Loop while the heap is not empty: let `t = peek().timeMs`; if `t > capMs`, stop with the cap reached. Otherwise pop and apply every event whose `timeMs === t`, including events pushed at `t` during this step, in heap order:
-   - `external-arrival`: `admitted += 1`, `state = 'walking'`, `walking += 1`, emit `arrive`, then depart from the entrance toward `route[0]` or the exit.
+   - `external-arrival`: `admitted += 1`, `state = 'walking'`, `walking += 1`, set `walkingMs` to the sum of `travel(from, to).durationMs` over every segment of the attendee's route (entrance, its stations in order, exit), emit `arrive`, then depart from the entrance toward `route[0]` or the exit.
    - `movement-arrival` at a station: `walking -= 1`, `waiting += 1`, `state = 'waiting'`, insert `{ attendeeId, queueJoinMs: t }` into the station's line, open a visit with `queueJoinMs = t`.
    - `movement-arrival` at the exit: `walking -= 1`, `exited += 1`, `state = 'exited'`, `exitMs = t`, emit `exit`.
    - `service-complete`: set `busy[server] = false`, close the visit with `completeMs = t`, `inService -= 1`, `walking += 1`, `state = 'walking'`, emit `complete`, then depart from the station toward the next route station or the exit.
-   - Depart from `from` to `to`: `{ pathId, durationMs } = travel(from, to)`; add `durationMs` to `walkingMs`; push `movement-arrival` at `t + durationMs` with `node = to`; emit `depart` with `arriveMs = t + durationMs` and one `MovementSegment { attendeeId, startMs: t, endMs: t + durationMs, pathId }`. A zero duration pushes an event at `t`, which this same step pops next because the heap keeps `t` at the top.
-3. Emit one `join` event per line insertion made in step 2, in line order, with `position` equal to the entry's index in the line at this point: after every event at `t` has been applied and before step 4 dispatches anything (row 1 at `t` = 60,000: `c#0000` joins with `position: 1` behind `b#0000`, who has waited since 30,000; step 4 then dispatches `b#0000`).
+   - Depart from `from` to `to`: `{ pathId, durationMs } = travel(from, to)`; push `movement-arrival` at `t + durationMs` with `node = to`; emit `depart` with `arriveMs = t + durationMs` and one `MovementSegment { attendeeId, startMs: t, endMs: t + durationMs, pathId }`. A zero duration pushes an event at `t`, which this same step pops next because the heap keeps `t` at the top.
+3. Emit one `join` event per line insertion made in step 2, in line order, with `position` equal to the entry's index in the line's current order at this point (never the value `Line.insert` returned at insertion, which a later insertion at the same `t` can change): after every event at `t` has been applied and before step 4 dispatches anything (row 1 at `t` = 60,000: `c#0000` joins with `position: 1` behind `b#0000`, who has waited since 30,000; step 4 then dispatches `b#0000`).
 4. Dispatch stations in code-unit order of `id`: while the line is non-empty and some server is free, `head = line.shift()`, `server` = lowest free index, `busy[server] = true`, `waiting -= 1`, `inService += 1`, `state = 'inService'`, `serviceMs = station.serviceMs(head.attendeeId)` (always ≥ 1), set `serviceStartMs = t` and `server` on the open visit, emit `start` with `waitMs = t - queueJoinMs`, push `service-complete` at `t + serviceMs`.
 5. Record `SettledSample` for `t` (counters and each station's `line.length`).
 6. After the loop: `unfinished` = IDs of attendees whose `state !== 'exited'`, sorted in code-unit order; `completion = unfinished.length === 0 ? 'complete' : 'drain-capped'`; when the cap was reached, emit `cap` at `capMs`.
@@ -244,7 +245,7 @@ export function walkDurationMs(distanceM: number, walkSpeedMps: number): number;
 // src/spatial/path-cache.ts
 export type CachedPath = { id: number; from: NodeRef; to: NodeRef; cells: Cell[]; distanceM: number; durationMs: number };
 export type PathCache = {
-  key: string;                                              // canonicalJson of { layout, stations: [{ id, cell }] sorted by id, walkSpeedMps }
+  key: string;                                              // stableJson of { layout with blockedCells sorted by x then y, stations: [{ id, cell }] sorted by id, walkSpeedMps }
   paths: CachedPath[];                                      // ids assigned in node order: entrance, stations by id, exit; then (from, to) pairs
   lookup(from: NodeRef, to: NodeRef): CachedPath;           // throws when unreachable; validation prevents that
   unreachable: { from: NodeRef; to: NodeRef }[];            // every ordered pair without a path
@@ -256,7 +257,7 @@ export function describeNode(input: Pick<Scenario, 'layout' | 'stations'>, node:
 // 'entrance (0,12)' | 'exit (0,4)' | 'station "packs" (34,12)'
 ```
 
-The cache computes every ordered pair among the entrance, the stations and the exit once (at most 12 nodes, 132 pairs, each one BFS over at most 6,400 cells). `simulate` builds one cache per call from the validated scenario; the fleet's editor may hold a cache per layout `key` and discard it when the key changes, which is what "paths are precomputed and cached per layout revision" means in practice. `Trace.paths` lists the cached paths referenced by at least one segment, in `id` order. Because the grid is undirected, `length(a → b) === length(b → a)` even though the two cell sequences may differ under the tie-break.
+The cache computes every ordered pair among the entrance, the stations and the exit once (at most 12 nodes, 132 pairs, each one BFS over at most 6,400 cells). `simulate` builds one cache per call from the validated scenario; the editor (a later spec) may hold a cache per layout `key` and discard it when the key changes, which is what "paths are precomputed and cached per layout revision" means in practice. `Trace.paths` lists the cached paths referenced by at least one segment, in `id` order. Because the grid is undirected, `length(a → b) === length(b → a)` even though the two cell sequences may differ under the tie-break.
 
 ### Metrics
 
@@ -382,7 +383,7 @@ export function createSimulationClient(deps?: Partial<ClientDeps>): SimulationCl
 // default createWorker: new Worker(new URL('./simulation.worker.ts', import.meta.url), { type: 'module' })  (*verify* on the pinned Vite)
 ```
 
-Worker handler, per message: parse with `ToWorkerSchema`; on failure post `error { runId: 0, message: 'Malformed worker message.' }` when `data.runId` is not a number, otherwise `error { runId, message }`. On `cancel`, set `cancelRequested = runId`. On `run`: `validateScenario`; on `ok: false` post `error` with the first issue's message plus ` (+<k> more)` when `issues.length > 1`; otherwise `await scenarioHash(scenario)`, then for each replication in order: if `cancelRequested === runId`, post `cancelled { runId }` and return; `simulate(scenario, replication, { trace, scenarioHash })` inside try/catch (a throw posts `error { runId, message: 'Simulation failed: ' + error.message }` and returns); post `result`; if `now() - lastProgressAt ≥ 200` post `progress { done, total }` and record `lastProgressAt`; `await yieldToLoop()`. The worker never terminates itself and serves the next `run` after any error.
+Worker handler, per message: parse with `ToWorkerSchema`; on failure post `error { runId: 0, message: 'Malformed worker message.' }` when `data.runId` is not a number, otherwise `error { runId, message }`. On `cancel`, add `runId` to `cancelledRuns`, a set of run IDs and never a single value, so that a `cancel` for run 1, a `run` 3 and a `cancel` for run 3 arriving before run 1's loop resumes still acknowledge run 1. On `run`: `validateScenario`; on `ok: false` post `error` with the first issue's message plus ` (+<k> more)` when `issues.length > 1`; otherwise `await scenarioHash(scenario)`, then for each replication in order: if `cancelledRuns.has(runId)`, post `cancelled { runId }` and return; `simulate(scenario, replication, { trace, scenarioHash })` inside try/catch (a throw posts `error { runId, message: 'Simulation failed: ' + error.message }` and returns); post `result`; if `now() - lastProgressAt ≥ 200` post `progress { done, total }` and record `lastProgressAt`; `await yieldToLoop()`. The worker never terminates itself and serves the next `run` after any error.
 
 Adapter, per call: `run()` with an empty `replications` array resolves `{ status: 'complete', results: [] }` at once, posts nothing and leaves `currentRunId` unchanged (9.12); otherwise it sets `currentRunId += 1`, posts `run`, stores the handle. A message is parsed with `FromWorkerSchema`, dropped and counted in `discardedMessages` when invalid, when its `runId` differs from `currentRunId` (for `progress`, `result`, `error`), or when it is a `cancelled` matching no pending cancel; the one exception is an `error` with `runId` 0 (the worker's answer to a message it could not parse), which resolves the pending run, if any, as `{ status: 'error', message: 'Malformed worker message.' }` (9.2, 9.9). `result` is pushed to the handle's results and `onResult`; when `results.length === replications.length` the handle resolves `{ status: 'complete' }`; `error` resolves `{ status: 'error', message }`. `cancel()` with an active run posts `cancel { runId: currentRunId }`, records `pendingCancel = { runId, timer }` with a 250 ms timer, sets `currentRunId += 1`; `cancelled` with the pending `runId` clears the timer and resolves `{ status: 'cancelled', message: 'Simulation cancelled.' }`; the timer firing calls `worker.terminate()`, replaces the worker with `createWorker()` and resolves `{ status: 'cancelled', message: 'Simulation cancelled. The simulation worker did not respond within 250 ms and was restarted.' }`. The adapter sets `worker.onerror` and `worker.onmessageerror` on every worker it creates: either event resolves the pending run, if any, as `{ status: 'error', message: 'The simulation worker stopped unexpectedly: <event.message, or "message could not be delivered" for onmessageerror>.' }`, clears any pending cancel timer, calls `terminate()`, replaces the worker with `createWorker()` and sets `currentRunId += 1`, so that a late message from the dead worker is discarded and the next `run()` is served by the new worker (9.11). `dispose()` terminates the worker and rejects nothing (a pending handle resolves `cancelled`).
 
@@ -394,7 +395,7 @@ Adapter, per call: `run()` with an empty `replications` array resolves `{ status
 | --- | --- | --- | --- |
 | `Scenario` | `id` (assigned by the editor; excluded from the hash) and `scenarioHash` (content identity: every field except `id`, `revision`, `title`, `notes`) | `schemaVersion: 1` for the JSON shape; `modelVersion` for the engine the scenario was last saved with; `revision` incremented by the editor per committed edit | editor state, scenario JSON exports |
 | Attendee | `${cohortId}#${ordinal}` (`doors#0000` … `doors#0119`); unique within a scenario because cohort IDs are unique and `#` is forbidden in IDs | — | compiled per replication, never stored |
-| `CachedPath` | `id` (0-based, assigned in node order entrance, stations by `id`, exit, then by ordered pair); `key` of the cache is `canonicalJson({ layout, walkSpeedMps })` | — | per `simulate` call; referenced from `Trace.segments` |
+| `CachedPath` | `id` (0-based, assigned in node order entrance, stations by `id`, exit, then by ordered pair); `key` of the cache is `stableJson` of the layout (blocked cells sorted), the stations' `(id, cell)` pairs sorted by `id` and `walkSpeedMps` | — | per `simulate` call; referenced from `Trace.segments` |
 | `RunResult` | `(scenarioHash, modelVersion, baseSeed, replication)`; two results with equal identity are byte-identical | `modelVersion = MODEL_VERSION` | worker messages, comparison, exports |
 | `expected.json` | `scenarioHash` per scenario | `modelVersion` | `public/examples/harbor-hall/expected.json` |
 | `failing-seeds.json` | `property` name plus `seed` | — | `tests/model/failing-seeds.json` |
@@ -427,7 +428,7 @@ SettledSample  { timeMs, admitted, walking, waiting, inService, exited, waitingB
 // public/examples/harbor-hall/expected.json
 {
   "label": "Regression snapshot of the accepted engine at R1, replication 0; not hand-calculated",
-  "modelVersion": "1.0.0",
+  "modelVersion": "0.1.0",
   "generatedOn": "2026-11-11",
   "scenarios": {
     "baseline":          { "scenarioHash": "<64 hex>", "completion": "complete", "unfinished": [], "metrics": { } },
@@ -460,20 +461,20 @@ Validation never throws; it returns every issue it found with the path of the of
 | Code | `path` | Message |
 | --- | --- | --- |
 | `SCHEMA_VERSION` | `schemaVersion` | `Unsupported schemaVersion <v>; this build reads version 1.` |
-| `MODEL_VERSION_FORMAT` | `modelVersion` | `modelVersion must look like 1.0.0; got "<v>".` |
+| `MODEL_VERSION_FORMAT` | `modelVersion` | `modelVersion must look like 0.1.0; got "<v>".` |
 | `SEED_FORMAT` | `baseSeed` | `Base seed must be 1–64 characters and must not contain "\|".` |
 | `ID_FORMAT` | `stations[<i>].id`, `cohorts[<i>].id` | `<Station|Cohort> id "<id>" must be 1–64 characters and must not contain "\|" or "#".` |
 | `DUPLICATE_ID` | `stations[<i>].id`, `cohorts[<i>].id` | `Duplicate <station|cohort> id "<id>".` |
-| `HORIZON_RANGE` | `horizonMs` | `Observation window must be between 1 ms and 21,600,000 ms (6 hours); got <v>.` |
-| `GRID_SIZE` | `layout.cols`, `layout.rows` | `Grid must be between 1 × 1 and 80 × 80 cells; got <cols> × <rows>.` |
+| `HORIZON_RANGE` | `horizonMs` | `Observation window must be a whole number of milliseconds between 1 and 21,600,000 (6 hours); got <v>.` |
+| `GRID_SIZE` | `layout.cols`, `layout.rows` | `Grid must be a whole number of cells, between 1 × 1 and 80 × 80; got <cols> × <rows>.` |
 | `CELL_SIZE` | `layout.cellSizeM` | `Cell size must be a positive number of meters; got <v>.` |
 | `WALK_SPEED` | `walkSpeedMps` | `Walking speed must be a positive number of meters per second; got <v>.` |
-| `CELL_OUT_OF_BOUNDS` | `layout.entrance`, `layout.exit`, `stations[<i>].cell`, `layout.blockedCells[<k>]` | `<Entrance|Exit|Station "<id>"|Blocked> cell (<x>,<y>) is outside the <cols> × <rows> grid.` |
+| `CELL_OUT_OF_BOUNDS` | `layout.entrance`, `layout.exit`, `stations[<i>].cell`, `layout.blockedCells[<k>]` | `<Entrance|Exit|Station "<id>"|Blocked> cell (<x>,<y>) is outside the <cols> × <rows> grid or has a coordinate that is not a whole number.` |
 | `CELL_BLOCKED` | `layout.entrance`, `layout.exit`, `stations[<i>].cell` | `<Entrance|Exit|Station "<id>"> cell (<x>,<y>) is blocked.` |
 | `DUPLICATE_BLOCKED_CELL` | `layout.blockedCells[<k>]` | `Blocked cell (<x>,<y>) is listed more than once.` |
 | `SERVERS_RANGE` | `stations[<i>].servers` | `Station "<id>": servers must be a whole number from 1 to 20; got <v>.` |
 | `SERVICE_RANGE` | `stations[<i>].service.seconds` or `.minS` | `Station "<id>": service seconds must be greater than 0 and at most 86,400; got <v>.` or `Station "<id>": triangular service needs 0 < min ≤ mode ≤ max (seconds, at most 86,400); got <min>/<mode>/<max>.` |
-| `COHORT_WINDOW` | `cohorts[<i>].startMs` | `Cohort "<id>": start must be at or after 0, before end, and end at or before the horizon; got start <s> ms, end <e> ms, horizon <h> ms.` |
+| `COHORT_WINDOW` | `cohorts[<i>].startMs` | `Cohort "<id>": start and end must be whole milliseconds, start at or after 0 and before end, and end at or before the horizon; got start <s> ms, end <e> ms, horizon <h> ms.` |
 | `COUNT_RANGE` | `cohorts[<i>].count` | `Cohort "<id>": count must be a whole number of 0 or more; got <v>.` |
 | `ARRIVAL_PATTERN` | `cohorts[<i>].arrivals` | `Cohort "<id>": arrival pattern must be "even" or "uniform"; got "<v>".` |
 | `ROUTE_LENGTH` | `cohorts[<i>].route` | `Cohort "<id>": route has <n> visits; the limit is 6.` |
@@ -485,7 +486,7 @@ Validation never throws; it returns every issue it found with the path of the of
 | `UNSAFE_MS` | `walkSpeedMps` | `Walking duration between <endpoint> and <endpoint> is <v> ms, beyond the largest safe integer; reduce the cell size or raise the walking speed.` |
 | `UNREACHABLE` | `layout` (station or exit unreachable from the entrance) or `cohorts[<i>].route[<k>]` (segment) | `No walkable path between <endpoint> and <endpoint>.` with endpoints rendered by `describeNode`: `entrance (0,12)`, `exit (0,4)`, `station "packs" (34,12)` |
 
-What the organizer sees: the fleet UI shows the message verbatim beside the row or field named by `path`; the worker's `error` message is the first issue's message plus ` (+<k> more)`. What is preserved: the previous scenario object and any earlier results stay untouched (the editor labels them stale on its side); the worker stays alive after any `error`; the adapter's `currentRunId` moves past a cancelled or failed run so late messages are dropped.
+What the organizer sees: the editor UI (a later spec) shows the message verbatim beside the row or field named by `path`; the worker's `error` message is the first issue's message plus ` (+<k> more)`. What is preserved: the previous scenario object and any earlier results stay untouched (the editor labels them stale on its side); the worker stays alive after any `error`; the adapter's `currentRunId` moves past a cancelled or failed run so late messages are dropped.
 
 | Situation | Typed result | Message shown |
 | --- | --- | --- |
@@ -505,7 +506,7 @@ What the organizer sees: the fleet UI shows the message verbatim beside the row 
 
 ## Testing Strategy
 
-All engine tests run under Node with Vitest 5.0.5 (MIT) and fast-check 4.10.2 (MIT), versions from plan section 4; no browser is needed for this spec. Commands: `npm run test:model` runs Vitest over `tests/model` and `tests/comparison`; `npm run verify` runs `typecheck`, `test:model` and `build`; one file runs with `npx vitest run tests/model/<file>` (*verify* the single-file invocation on the pinned Vitest at scaffold). `tests/model/helpers/build-scenario.ts` exports `scenario(overrides)` with the defaults `schemaVersion: 1`, `id: 'test'`, `revision: 0`, `title: 'test'`, `modelVersion: MODEL_VERSION`, `baseSeed: 'test-seed'`, `horizonMs: 180_000`, `layout: { cols: 1, rows: 1, cellSizeM: 0.5, blockedCells: [], entrance: [0,0], exit: [0,0] }`, `walkSpeedMps: 1`, `stations: []`, `cohorts: []`, `notes: ''`; the one-cell layout gives zero walking. `tests/model/helpers/run.ts` exports `runOnce(scenario, replication, trace)` that validates, hashes with `scenarioHash` and calls `simulate`. `tests/model/fixtures/harbor-hall.ts` exports `baseline`, `plusOneCheckin` and `shorterRoute` with exactly the plan section 5 values (`modelVersion: '1.0.0'` written literally, the R1 value of plan section 6, so the fixtures hash-equal the `public/examples/harbor-hall/*.json` files the editor agent writes with the same literal; `baseSeed: 'harbor-hall-2026'`, `horizonMs: 2_400_000`, 40 × 24 grid, `cellSizeM` 0.5, 32 blocked cells for `x` 16–23 × `y` 20–23, entrance (0,12), exit (0,4), `walkSpeedMps` 1.2, cohort `doors` 0–1,200,000 ms count 120 `uniform` route `['checkin', 'packs']`, `checkin` at (10,12) with 1 server and triangular 8/15/22 s, `packs` at (34,12) with 2 servers and triangular 6/10/14 s; the candidates differ only in `checkin.servers: 2` and `packs.cell: [14, 8]`).
+All engine tests run under Node with Vitest 5.0.5 (MIT) and fast-check 4.10.2 (MIT), versions from plan section 4; no browser is needed for this spec. Commands: `npm run test:model` runs Vitest over `tests/model` and `tests/comparison`; `npm run verify` runs `typecheck`, `test:model` and `build`; one file runs with `npx vitest run tests/model/<file>` (*verify* the single-file invocation on the pinned Vitest at scaffold). `tests/model/helpers/build-scenario.ts` exports `scenario(overrides)` with the defaults `schemaVersion: 1`, `id: 'test'`, `revision: 0`, `title: 'test'`, `modelVersion: MODEL_VERSION`, `baseSeed: 'test-seed'`, `horizonMs: 180_000`, `layout: { cols: 1, rows: 1, cellSizeM: 0.5, blockedCells: [], entrance: [0,0], exit: [0,0] }`, `walkSpeedMps: 1`, `stations: []`, `cohorts: []`, `notes: ''`; the one-cell layout gives zero walking. `tests/model/helpers/run.ts` exports `runOnce(scenario, replication, trace)` that validates, hashes with `scenarioHash` and calls `simulate`. `tests/model/fixtures/harbor-hall.ts` exports `baseline`, `plusOneCheckin` and `shorterRoute` with exactly the plan section 5 values (`modelVersion: '0.1.0'` written literally, the R1 value and the value of `MODEL_VERSION`, so the fixtures hash-equal the `public/examples/harbor-hall/*.json` files that task 15 writes from them; `baseSeed: 'harbor-hall-2026'`, `horizonMs: 2_400_000`, 40 × 24 grid, `cellSizeM` 0.5, 32 blocked cells for `x` 16–23 × `y` 20–23, entrance (0,12), exit (0,4), `walkSpeedMps` 1.2, cohort `doors` 0–1,200,000 ms count 120 `uniform` route `['checkin', 'packs']`, `checkin` at (10,12) with 1 server and triangular 8/15/22 s, `packs` at (34,12) with 2 servers and triangular 6/10/14 s; the candidates differ only in `checkin.servers: 2` and `packs.cell: [14, 8]`).
 
 ### Unit fixtures
 
@@ -528,10 +529,10 @@ All engine tests run under Node with Vitest 5.0.5 (MIT) and fast-check 4.10.2 (M
 | `metrics.test.ts` | 7.3, 7.5 | `p95Index` 20, 1, 3; `percentile95([])`; `formatMetricValue` samples | 18, 0, 2; `null`; `—`, `30.0 s`, `100.0%`, `2.00 h`, `2.67 h`, `3` |
 | `validation.test.ts` | 1.3–1.8 | one scenario per code; a scenario with three defects; a frozen input; `modelVersion: '0.9.0'` | the exact message per code; three issues in one result; input unchanged; one `MODEL_VERSION_MISMATCH` warning |
 | `hash.test.ts` | 1.6 | title change; station reorder; `servers` change; Harbor Hall three | equal, equal, different; 64 lowercase hex; three distinct hashes |
-| `worker.test.ts` | 17 (worker side) | `createWorkerHandler` with injected `now` and `yieldToLoop`, wired to `createSimulationClient` through a fake `WorkerLike` whose message queue can hold or drop messages and whose `onerror`/`onmessageerror` the test can fire | 30 replications post 30 `result` and progress spaced ≥ 200 ms; a cancel between replications yields `cancelled` and no later `result`; a held `result` released after a new `run` is discarded (`discardedMessages` 1, `onResult` not called); a dropped `cancel` triggers `terminate()` at 250 ms and a new worker; an invalid scenario yields `error` and the next run succeeds; a run in progress that receives `error { runId: 0 }` resolves `{ status: 'error', message: 'Malformed worker message.' }` and no later `result` is delivered; a run in progress whose worker fires `onerror` with message `boom` resolves `{ status: 'error', message: 'The simulation worker stopped unexpectedly: boom.' }`, `terminate()` is called, `currentRunId` increments and the next `run()` completes on the new worker; `onmessageerror` resolves with `message could not be delivered`; `run(scenario, [])` resolves `{ status: 'complete', results: [] }` with no `postMessage` call |
+| `worker.test.ts` | 17 (worker side) | `createWorkerHandler` with injected `now` and `yieldToLoop`, wired to `createSimulationClient` through a fake `WorkerLike` whose message queue can hold or drop messages and whose `onerror`/`onmessageerror` the test can fire | 30 replications post 30 `result` and progress spaced ≥ 200 ms; a cancel between replications yields `cancelled` and no later `result`; a held `result` released after a new `run` is discarded (`discardedMessages` 1, `onResult` not called); a dropped `cancel` triggers `terminate()` at 250 ms and a new worker; an invalid scenario yields `error` and the next run succeeds; a run in progress that receives `error { runId: 0 }` resolves `{ status: 'error', message: 'Malformed worker message.' }` and no later `result` is delivered; a run in progress whose worker fires `onerror` with message `boom` resolves `{ status: 'error', message: 'The simulation worker stopped unexpectedly: boom.' }`, `terminate()` is called, `currentRunId` increments and the next `run()` completes on the new worker; `onmessageerror` resolves with `message could not be delivered`; `run(scenario, [])` resolves `{ status: 'complete', results: [] }` with no `postMessage` call; a `cancel` for run 1, a `run` 3 and a `cancel` for run 3 delivered before run 1's loop resumes yield `cancelled` for runs 1 and 3; a Vite `build()` in memory (`write: false`) over an entry that imports `createSimulationClient` contains a chunk for `simulation.worker.ts` (*verify* the option names on Vite 8.3.5) |
 | `purity.test.ts` | 3.2, 8.6 | scan `src/domain`, `src/simulation`, `src/spatial` (and `src/workers` for imports) | no `Math.random`, `Date.now`, `performance.now`, `new Date(`; no import from `pixi.js`, `react`, `react-dom`, `src/replay`, `src/ui`, `src/imports`, `src/storage`, `src/comparison`, `src/exports` |
 | `expected-snapshot.test.ts` | 11.3 | replication 0 of the three fixtures | `scenarioHash`, `completion`, `unfinished`, `metrics` equal to `expected.json` |
-| `harbor-hall-files.test.ts` | 11.4 | `public/examples/harbor-hall/{baseline,plus-one-checkin,shorter-route}.json` | each validates and hash-equals its TS fixture |
+| `harbor-hall-files.test.ts` | 11.4 | the three files in `public/examples/harbor-hall/`, written from the TS fixtures when `UPDATE_EXPECTED=1` | each validates with no issue and no warning and hash-equals its TS fixture; the three hashes are distinct |
 
 ### Property-based tests
 
@@ -543,7 +544,7 @@ None in this spec. The playback-speed and follow-camera half of row 10, the UI s
 
 ### Budget
 
-The whole `tests/model` suite targets under 60 s on the builder's named laptop; task 12 measures it three times and records the median in `docs/kiro-log.md`. If the median exceeds 60 s, the property case count drops before any property is removed. The save hook `model-tests-on-save` runs `npm run test:model`, which also covers `tests/comparison` (target 45 s), so a save under `src/simulation/` or `src/spatial/` costs up to about 105 s once both suites exist; `.kiro/hooks/README.md` records the measured duration at the November 11 re-observation.
+The whole `tests/model` suite targets under 60 s on the builder's named laptop; task 12 measures it three times and records the median in `docs/kiro-log.md`. If the median exceeds 60 s, the property case count drops before any property is removed. The save hook `model-tests-on-save` runs `npm run test:model`, which also covers `tests/comparison` (target 45 s), so a save under `src/simulation/` or `src/spatial/` costs up to about 105 s once both suites exist; when the hook is observed in the Kiro IDE, `.kiro/hooks/README.md` records the measured duration; no task of this spec depends on a hook firing.
 
 ## Correctness Properties
 
@@ -596,4 +597,4 @@ Each property is checked by `checkProperty` over the arbitraries above; the requ
 - Performance measurements and `docs/performance.md` (package R5); this spec records timings in the log only as observations.
 - Playwright journeys, video capture, the UI side of row 17 and the playback half of row 10.
 - Model features the plan excludes: crowd physics, collision avoidance, congestion-dependent speed, abandonment, queue capacity limits, staff breaks, scheduled staffing changes, repeated visits to one station, sensitivity sweeps, floor-plan image underlays, a second example event.
-- Any change to the `Scenario` type in `src/domain/scenario.ts` without a logged one-line request to the integrator, and any change to `package.json`, the lockfile, `vite.config.ts`, `src/main.tsx` or `src/app.tsx`.
+- Any change to the `Scenario` type after task 0 that plan section 5 does not call for, any change to `src/main.tsx` or `src/app.tsx` after task 0, and any edit to `package.json`, the lockfile or `vite.config.ts` that no task's Verify line needs.

@@ -4,6 +4,7 @@
     {
       "name": "verify-on-stop",
       "trigger": "Stop",
+      "matcher": ".*",
       "action": { "type": "command", "command": "npm run verify" },
       "timeout": 600
     }
