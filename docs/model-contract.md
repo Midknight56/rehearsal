@@ -23,7 +23,7 @@ The Harbor Hall Community Fair, its 120 attendees, the 8/15/22 s and 6/10/14 s s
 
 One station is one service stage: a single FIFO line feeding identical parallel servers. A cohort follows its ordered station IDs, each at most once, then exits. Staffing is constant through a run. Queue capacity is unlimited and nobody leaves early. Walking is at one constant speed along the computed grid path.
 
-Limits (`src/domain/limits.ts`): 5,000 attendees, 10 stations, 6 station visits per route, 80 × 80 cells, a 21,600,000 ms (360-minute) observation window, servers 1–20, service at most 86,400 s, IDs and `baseSeed` 1–64 characters.
+Limits (`src/domain/limits.ts`): 5,000 attendees, 10 stations, 6 station visits per route, 80 × 80 cells, a 21,600,000 ms (360-minute) observation window, servers 1 to 20, service at most 86,400 s, IDs and `baseSeed` 1 to 64 characters.
 
 `validateScenario(input)` never throws and never mutates its input. It returns every issue found, each with a `path`, or `ok: true` with `warnings`. A `modelVersion` that differs from `MODEL_VERSION` is valid and gives one `MODEL_VERSION_MISMATCH` warning. Five passes: shape and finite numbers, identifiers and limits, values and cohorts, geometry, reachability. A shape or `NON_FINITE` defect stops validation after pass 1.
 
@@ -33,8 +33,8 @@ Error messages (`MESSAGES` in `src/domain/validate.ts`; angle brackets are subst
 | --- | --- |
 | `SCHEMA_VERSION` | `Unsupported schemaVersion <v>; this build reads version 1.` |
 | `MODEL_VERSION_FORMAT` | `modelVersion must look like 0.1.0; got "<v>".` |
-| `SEED_FORMAT` | `Base seed must be 1–64 characters and must not contain "\|".` |
-| `ID_FORMAT` | `<Station\|Cohort> id "<id>" must be 1–64 characters and must not contain "\|" or "#".` |
+| `SEED_FORMAT` | `Base seed must be 1 to 64 characters and must not contain "\|".` |
+| `ID_FORMAT` | `<Station\|Cohort> id "<id>" must be 1 to 64 characters and must not contain "\|" or "#".` |
 | `DUPLICATE_ID` | `Duplicate <station\|cohort> id "<id>".` |
 | `HORIZON_RANGE` | `Observation window must be a whole number of milliseconds between 1 and 21,600,000 (6 hours); got <v>.` |
 | `GRID_SIZE` | `Grid must be a whole number of cells, between 1 × 1 and 80 × 80; got <cols> × <rows>.` |
@@ -92,7 +92,7 @@ Error messages (`MESSAGES` in `src/domain/validate.ts`; angle brackets are subst
 
 ## Metrics
 
-Every metric is a `MetricValue { value, unit, population, n, conditioned, note }`. `unit` is `count`, `ms`, `ratio`, `people` or `hours`. `population` is `admitted`, `completedJourney` or `closingWindow`. An undefined mean, total or percentile has `value: null` and shows `—` (U+2014), never `NaN`, `Infinity`, `undefined` or a fabricated 0. p95 is the ascending-sorted element at index `Math.ceil(0.95 * n) - 1`.
+Every metric is a `MetricValue { value, unit, population, n, conditioned, note }`. `unit` is `count`, `ms`, `ratio`, `people` or `hours`. `population` is `admitted`, `completedJourney` or `closingWindow`. An undefined mean, total or percentile has `value: null` and shows `n/a` (U+2014), never `NaN`, `Infinity`, `undefined` or a fabricated 0. p95 is the ascending-sorted element at index `Math.ceil(0.95 * n) - 1`.
 
 The ten definitions of plan section 7 (verbatim):
 

@@ -52,8 +52,14 @@ describe('README model limits (requirement 11.2)', () => {
     for (const command of ['npm ci', 'npm run verify', 'npm run test:e2e']) expect(readme).toContain(command);
   });
 
-  it('keeps the owner placeholder line directly under the one-sentence description', () => {
-    expect(readme).toContain('\n<!-- criteria block goes here -->\n');
+  it('has the criteria block under the description, the five criteria in the rules order', () => {
+    const at = readme.indexOf('\n## Judging criteria at a glance\n');
+    expect(at).toBeGreaterThan(0);
+    expect(at).toBeLessThan(readme.indexOf('\n## Commands\n'));
+    const names = ['Potential Impact', 'Technological Implementation', 'Design', 'Innovation/Idea', 'Presentation'];
+    const positions = names.map((n) => readme.indexOf(`\n**${n}.**`));
+    expect(positions.every((p) => p > at)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
   });
 });
 

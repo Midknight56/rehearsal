@@ -18,7 +18,7 @@ Picks made while building without the owner. Each line says what was picked and 
 
 ## Licence (17 Nov, 9:05 AM)
 
-Pick: MIT, holder Adrian Ferguson (he enters as himself). Why: the rules ask for an open source licence file; MIT is OSI approved, short, and fits every dependency (SheetJS is Apache-2.0). `package.json` gets `"license": "MIT"`. Not picked: Apache-2.0 (longer, adds a NOTICE duty; no gain here).
+Pick: MIT, holder Adrian Ferguson. Why: the rules ask for an open source licence file; MIT is OSI approved, short, and fits every dependency (SheetJS is Apache-2.0). `package.json` gets `"license": "MIT"`. Not picked: Apache-2.0 (longer, adds a NOTICE duty; no gain here).
 
 ## Playwright MCP entry (17 Nov, 10:15 AM)
 
@@ -27,3 +27,7 @@ I wrote `.kiro/settings/mcp.json` as the owner's helper, with the exact entry sp
 ## Kiro CLI version in the log (17 Nov, 10:30 AM)
 
 `kiro-cli --version` prints 3.4.0; the binary's file time is 2026-11-16 7:46 PM (UTC-5) and the first Kiro run of this repository started at 8:12 PM (`rehearsal-logs/B-sc.log` line 1). So every log row ran on 3.4.0, and the Surface cells now say `Kiro CLI 3.4.0, model auto`. The specs' rule already said to use the version the CLI prints.
+
+## Files not written by Kiro (17 Nov, 11:15 AM)
+
+Kiro wrote the application code and its tests. Written by hand instead: `LICENSE`, `.kiro/settings/mcp.json`, the `"license"` field of `package.json`, the "Judging criteria at a glance" block of `README.md`, the one test in `tests/comparison/readme-limits.test.ts` that checks that block (it replaced the placeholder check), the no dash pass over the Markdown files, and this file.
