@@ -82,7 +82,7 @@ test.describe('6.4 the sprite cap (matrix row 22)', () => {
 test.describe('6.5 resolution and the hidden document', () => {
   for (const factor of [1, 2, 3]) {
     test(`device scale factor ${factor} gives resolution ${Math.min(factor, 2)}`, async ({ browser }) => {
-      const context = await browser.newContext({ deviceScaleFactor: factor, baseURL: 'http://localhost:4173' });
+      const context = await browser.newContext({ deviceScaleFactor: factor, baseURL: 'http://localhost:4273' });
       const page = await context.newPage();
       await openFair(page);
       await simulate(page);

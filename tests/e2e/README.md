@@ -2,7 +2,7 @@
 
 Playwright 1.64.1, Chromium only, headless only. `playwright.config.ts` starts two preview servers and stops them when the
 run ends: the test build (`vite build --mode test`, which loads `.env.test` and sets `VITE_REHEARSAL_TEST=1`, read in the
-app as `import.meta.env.VITE_REHEARSAL_TEST === '1'`) on port 4173, and a plain production build on port 4174 for
+app as `import.meta.env.VITE_REHEARSAL_TEST === '1'`) on port 4273, and a plain production build on port 4274 for
 `hook-absent.spec.ts`. Viewport 1,280 x 720 unless a spec sets 1,024 x 640 or 640 x 360. Every test gets a fresh context.
 
 Run `npx playwright install chromium` once on a new machine (done on 2026-11-16 on this PC: Chrome Headless Shell

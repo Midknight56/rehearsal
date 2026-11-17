@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 // 10.8: the plain production build, served by the second webServer, has no test hook.
-test.use({ baseURL: 'http://localhost:4174' });
+test.use({ baseURL: 'http://localhost:4274' });
 
 test('window.__rehearsal is undefined in the production build, on the landing screen and on the Plan screen', async ({ page }) => {
   await page.goto('/');
