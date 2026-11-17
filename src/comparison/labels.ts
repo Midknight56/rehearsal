@@ -4,7 +4,7 @@ export const RANGE_LABEL = 'variation across these simulated runs';
 export const REPLAY_NOTE = 'This replay is one example run; the comparison numbers come from all 30.';
 // Composed from REPLICATIONS so the literal-count scan never matches a source literal.
 export const COMPLETE_TEXT = `${REPLICATIONS} of ${REPLICATIONS} paired runs complete`;
-export const STALE_TEXT = 'Stale — rerun';
+export const STALE_TEXT = 'Stale, rerun';
 export const COMBINED_NOTE = 'Combined candidate: run each change on its own first to see which one moves the numbers.';
 export const PER_PERSON_OFF = 'Per-person comparison is off because the attendee populations differ.';
 export const SAVE_REASONS = {

@@ -19,8 +19,8 @@ type Mutator = (s: Record<string, any>) => void; // eslint-disable-line @typescr
 const cases: [IssueCode, Mutator, string][] = [
   ['SCHEMA_VERSION', (s) => { s.schemaVersion = 2; }, 'Unsupported schemaVersion 2; this build reads version 1.'],
   ['MODEL_VERSION_FORMAT', (s) => { s.modelVersion = 'v1'; }, 'modelVersion must look like 0.1.0; got "v1".'],
-  ['SEED_FORMAT', (s) => { s.baseSeed = 'a|b'; }, 'Base seed must be 1–64 characters and must not contain "|".'],
-  ['ID_FORMAT', (s) => { s.stations[0].id = 'a#b'; }, 'Station id "a#b" must be 1–64 characters and must not contain "|" or "#".'],
+  ['SEED_FORMAT', (s) => { s.baseSeed = 'a|b'; }, 'Base seed must be 1 to 64 characters and must not contain "|".'],
+  ['ID_FORMAT', (s) => { s.stations[0].id = 'a#b'; }, 'Station id "a#b" must be 1 to 64 characters and must not contain "|" or "#".'],
   ['DUPLICATE_ID', (s) => { s.stations.push({ ...s.stations[0] }); }, 'Duplicate station id "desk".'],
   ['HORIZON_RANGE', (s) => { s.horizonMs = 0; }, 'Observation window must be a whole number of milliseconds between 1 and 21,600,000 (6 hours); got 0.'],
   ['GRID_SIZE', (s) => { s.layout.cols = 81; }, 'Grid must be a whole number of cells, between 1 × 1 and 80 × 80; got 81 × 3.'],

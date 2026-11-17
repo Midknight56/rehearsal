@@ -1,4 +1,4 @@
-// The only file that imports SheetJS Community Edition (xlsx 0.20.3, Apache-2.0). Tests pass a fake WorkbookReader instead.
+// The only file that reads with SheetJS Community Edition (xlsx 0.20.3, Apache-2.0); src/exports/xlsx.ts is the only one that writes with it. Tests pass a fake WorkbookReader instead.
 //
 // SheetJS cell object fields read here (checked on 0.20.3 against the fixtures of scripts/make-fixtures.ts):
 //   t  type: 'n' number, 's' string, 'b' boolean, 'e' error, 'd' date (with the cellDates read option), 'z' stub (blank)

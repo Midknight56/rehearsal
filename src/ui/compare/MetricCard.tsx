@@ -25,7 +25,7 @@ export function MetricCard({ metric, view }: { metric: Metric; view: CompareView
         <strong data-field="mean-change">{formatChange(metric.meanChange, metric.unit)}</strong>
         {star(metric)}
       </p>
-      <p data-field="range">{`${formatChange(metric.rangeP10, metric.unit)} to ${formatChange(metric.rangeP90, metric.unit)} \u2014 ${RANGE_LABEL}`}</p>
+      <p data-field="range">{`${formatChange(metric.rangeP10, metric.unit)} to ${formatChange(metric.rangeP90, metric.unit)}, ${RANGE_LABEL}`}</p>
       <p data-field="runs">{runs}</p>
       <p className="muted">
         {`Baseline ${formatMean(metric.baselineMean, metric.unit)}${star(metric)} \u00b7 Candidate ${formatMean(metric.candidateMean, metric.unit)}${star(metric)} \u00b7 n = ${metric.n}`}

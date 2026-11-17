@@ -1,7 +1,13 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { badgeWords } from './helpers/render';
+import { runPairedComparison } from '../../src/comparison/runner';
+import { renderComparisonHtml } from '../../src/exports/printable-comparison';
+import { renderRunSheet } from '../../src/exports/run-sheet';
+import { baseline } from './fixtures/pairs';
+import { harborPlusOne } from './fixtures/pairs';
+import { createInProcessClient } from './helpers/in-process-client';
+import { badgeWords, forbiddenMarkup, generatedAt } from './helpers/render';
 
 const LITERAL = /'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g;
 
@@ -37,5 +43,22 @@ describe('no approval vocabulary in source literals (requirement 8.4)', () => {
     expect(literalsOf("const a = 'the optimal layout'; // safe\n").some((l) => badgeWords.test(l))).toBe(true);
     expect(literalsOf("const a = 'ok'; // the optimal comment\n").some((l) => badgeWords.test(l))).toBe(false);
     expect(badgeWords.test('unsafe')).toBe(false);
+  });
+});
+
+describe('no approval vocabulary in the rendered documents (requirement 8.4)', () => {
+  it('finds none of the six words, no active markup and no interval wording in the Harbor Hall printable comparison', async () => {
+    const outcome = await runPairedComparison(createInProcessClient(), harborPlusOne.baseline, harborPlusOne.candidate).done;
+    if (outcome.status !== 'complete') throw new Error('comparison did not complete');
+    const html = renderComparisonHtml(outcome.comparison, { generatedAt });
+    expect(html).not.toMatch(badgeWords);
+    expect(html).not.toMatch(forbiddenMarkup);
+    expect(html).not.toMatch(/confidence interval|prediction interval|margin of error|significant/i);
+  });
+
+  it('finds none of them in the Harbor Hall run sheet', () => {
+    const { html } = renderRunSheet(baseline, { generatedAt, scenarioHash: 'a'.repeat(64) });
+    expect(html).not.toMatch(badgeWords);
+    expect(html).not.toMatch(forbiddenMarkup);
   });
 });

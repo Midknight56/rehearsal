@@ -286,7 +286,7 @@ export function GameViewPanel({ store, createView = createGameView, ghost }: Pro
     const pairs = attendeePairs(ghost.selection, ghost.population);
     const pair = pairs.ok ? pairs.pairs.find((p) => p.id === attendee) : undefined;
     if (pair === undefined) return null;
-    const time = (ms: number | null): string => (ms === null ? '\u2014' : formatTimestamp(ms));
+    const time = (ms: number | null): string => (ms === null ? 'n/a' : formatTimestamp(ms));
     return `Baseline: waited ${time(pair.baselineWaitMs)} \u00b7 journey ${time(pair.baselineJourneyMs)}`;
   }, [ghost, attendee]);
 

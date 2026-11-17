@@ -336,7 +336,7 @@ export const ASSUMPTIONS: readonly string[] = [
   'No personal space, congestion-dependent walking speed, doorway throughput, accessibility clearance, crowd pressure or collisions: queue sprites never block movement.',
   'The output of a run is a scenario result under these assumptions for one seed and one replication: scenario results, not a forecast.',
 ];   // the eight lines of `src/ui/plan/AssumptionsPanel.tsx` as they stand today (read from the file on 2026-11-17); `assumptions-text.test.ts` fails when the two lists differ
-export const LIMITS_TEXT = 'Limits: at most 5,000 attendees, 10 stations, 6 station visits per route, 80 × 80 cells, a 360-minute observation window, servers 1–20, 10 saved scenarios, a 2 MiB import file.';   // equals the panel's rendered `LIMITS_TEXT`, which is built from `LIMITS` in `src/domain/limits.ts`
+export const LIMITS_TEXT = 'Limits: at most 5,000 attendees, 10 stations, 6 station visits per route, 80 × 80 cells, a 360-minute observation window, servers 1 to 20, 10 saved scenarios, a 2 MiB import file.';   // equals the panel's rendered `LIMITS_TEXT`, which is built from `LIMITS` in `src/domain/limits.ts`
 export const NOT_A_FORECAST = 'Scenario results, not a forecast.';
 export const FORBIDDEN_BADGE_WORDS: readonly string[] = ['optimized', 'optimised', 'optimal', 'safe', 'certified', 'recommended'];
 export function modelVersionLine(version?: string): string;            // `Model version ${version ?? MODEL_VERSION}`

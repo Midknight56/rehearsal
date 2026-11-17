@@ -22,7 +22,7 @@ export const ASSUMPTIONS = [
 
 export const LIMITS_TEXT =
   `Limits: at most ${LIMITS.maxAttendees.toLocaleString('en-US')} attendees, ${LIMITS.maxStations} stations, ${LIMITS.maxRouteVisits} station visits per route, ` +
-  `${LIMITS.maxCols} × ${LIMITS.maxRows} cells, a ${LIMITS.maxHorizonMs / 60_000}-minute observation window, servers ${LIMITS.minServers}–${LIMITS.maxServers}, 10 saved scenarios, a 2 MiB import file.`;
+  `${LIMITS.maxCols} × ${LIMITS.maxRows} cells, a ${LIMITS.maxHorizonMs / 60_000}-minute observation window, servers ${LIMITS.minServers} to ${LIMITS.maxServers}, 10 saved scenarios, a 2 MiB import file.`;
 
 export function AssumptionsPanel({ store }: { store: EditorStore }): ReactElement {
   const state = useEditorState(store);

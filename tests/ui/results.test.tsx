@@ -35,14 +35,14 @@ describe('result tables (requirement 9.1, plan section 7)', () => {
     expect(screen.getAllByRole('table').every((t) => t.querySelector('caption') !== null)).toBe(true);
   });
 
-  it('shows — for an undefined average and never 0 or NaN', async () => {
+  it('shows n/a for an undefined average and never 0 or NaN', async () => {
     const { baseline } = harborHall();
     const empty = { ...baseline, cohorts: baseline.cohorts.map((c) => ({ ...c, count: 0 })) };
     const store = makeStore([empty], ['empty']);
     renderWith(store, (s) => <ResultTables store={s} />);
     const r = await load(store);
     expect(r.metrics.queueWait.mean.value).toBeNull();
-    expect(document.body.textContent).toContain('—');
+    expect(document.body.textContent).toContain('n/a');
     expect(document.body.textContent).not.toMatch(/NaN|undefined|Infinity/);
   });
 
@@ -58,7 +58,7 @@ describe('result tables (requirement 9.1, plan section 7)', () => {
   });
 });
 
-describe('Stale — rerun label (4.3)', () => {
+describe('Stale, rerun label (4.3)', () => {
   it('follows results.status: absent while fresh, present after an edit changes the hash, gone after undo', async () => {
     const store = makeStore();
     renderWith(store, (s) => <ResultTables store={s} />);

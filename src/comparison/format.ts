@@ -3,6 +3,9 @@ import type { Cell, Service } from '../domain/scenario';
 // Display-unit formatters shared by diff, exports and the run sheet. Internal time is milliseconds; these write minutes,
 // seconds and metres for people.
 
+/** The text shown for a value that is undefined (a null metric, change or count). */
+export const EMPTY_VALUE = 'n/a';
+
 const minutesOf = (ms: number): string => {
   const minutes = ms / 60_000;
   return Number.isInteger(minutes) ? String(minutes) : minutes.toFixed(1);
@@ -12,7 +15,7 @@ export function formatMinutes(ms: number): string {
   return `${minutesOf(ms)} min`;
 }
 export function formatWindow(startMs: number, endMs: number): string {
-  return `${minutesOf(startMs)}–${formatMinutes(endMs)}`;
+  return `${minutesOf(startMs)} to ${formatMinutes(endMs)}`;
 }
 export function formatService(service: Service): string {
   return service.kind === 'constant'

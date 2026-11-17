@@ -28,7 +28,7 @@ Model version 0.1.0 is the engine these lines describe. The sentences below are 
 - No personal space, congestion-dependent walking speed, doorway throughput, accessibility clearance, crowd pressure or collisions: queue sprites never block movement.
 - The output of a run is a scenario result under these assumptions for one seed and one replication: scenario results, not a forecast.
 
-Limits: at most 5,000 attendees, 10 stations, 6 station visits per route, 80 × 80 cells, a 360-minute observation window, servers 1–20, 10 saved scenarios, a 2 MiB import file.
+Limits: at most 5,000 attendees, 10 stations, 6 station visits per route, 80 × 80 cells, a 360-minute observation window, servers 1 to 20, 10 saved scenarios, a 2 MiB import file.
 
 Model version 0.1.0
 

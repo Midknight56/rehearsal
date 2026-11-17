@@ -45,8 +45,8 @@ describe('formatChange and formatMean', () => {
     expect(formatChange(0, 'count')).toBe('0 (no change)');
     expect(formatChange(0, 'ratio')).toBe('0.0 percentage points (no change)');
     expect(formatChange(0, 'hours')).toBe('0.00 h (no change)');
-    expect(formatChange(null, 'count')).toBe('—');
-    expect(formatMean(null, 'ms')).toBe('—');
+    expect(formatChange(null, 'count')).toBe('n/a');
+    expect(formatMean(null, 'ms')).toBe('n/a');
     expect(formatMean(30_000, 'ms')).toBe('30.0 s');
     expect(formatMean(0.5, 'ratio')).toBe('50.0%');
     expect(formatMean(2, 'hours')).toBe('2.00 h');

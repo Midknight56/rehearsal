@@ -3,6 +3,7 @@ import { formatMetricValue, type Population, type Unit } from '../simulation/met
 import type { RunResult } from '../simulation/simulate';
 import { RANGE_LABEL } from './labels';
 import { METRIC_KEYS, STATION_METRIC_KEYS, readMetric, readStationMetric, type Direction, type StationMetricKey } from './metric-keys';
+import { EMPTY_VALUE } from './format';
 import { percentile } from './percentiles';
 import { REPLICATIONS, REPLICATION_INDICES } from './replications';
 
@@ -142,15 +143,13 @@ export function pairResults(
   return { ok: true, metrics, stations: pairedStations, completion: { baselineCapped, candidateCapped } };
 }
 
-const DASH = '—';
-
 function signed(text: string, value: number): string {
   return value > 0 ? `+${text}` : text;
 }
 
 /** A paired change in display units with an ASCII sign; an exact zero reads "(no change)". */
 export function formatChange(value: number | null, unit: Unit): string {
-  if (value === null) return DASH;
+  if (value === null) return EMPTY_VALUE;
   let text: string;
   switch (unit) {
     case 'ms': text = `${(value / 1000).toFixed(1)} s`; break;

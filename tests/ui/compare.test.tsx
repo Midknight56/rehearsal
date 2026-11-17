@@ -107,7 +107,7 @@ describe('12.2 a complete comparison', () => {
     const metric = store.getState().compare.comparison?.metrics.find((m) => m.key === 'queueWait.mean');
     expect(metric?.n).toBe(30);
     expect(card.querySelector('[data-field=mean-change]')?.textContent).toBe(formatChange(metric?.meanChange ?? null, 'ms'));
-    expect(card.querySelector('[data-field=range]')?.textContent).toMatch(new RegExp(`^.+ to .+ \\u2014 ${RANGE_LABEL}$`));
+    expect(card.querySelector('[data-field=range]')?.textContent).toMatch(new RegExp(`^.+ to .+, ${RANGE_LABEL}$`));
     expect(card.querySelector('[data-field=runs]')?.textContent).toMatch(
       /^Candidate had lower mean queue wait in \d+ of 30 runs; the same simulated attendees and random draws were used in both\.$/,
     );
@@ -118,7 +118,7 @@ describe('12.2 a complete comparison', () => {
     expect(screen.getByText(/^30 paired runs took [\d.]+ s on this device$/)).toBeTruthy();
     expect(screen.getByTestId('export-scenario-json')).toBeTruthy();
     for (const id of ['export-results-csv', 'export-comparison-csv', 'export-workbook', 'open-printable-comparison', 'open-run-sheet']) {
-      expect(screen.queryByTestId(id), `${id} waits for task 15`).toBeNull();
+      expect(screen.queryByTestId(id), `${id} is rendered once task 15 has run`).not.toBeNull();
     }
     await waitFor(() => expect(view.callsOf('load').length).toBe(1));
     expect(store.getState().status).toBe(COMPLETE_TEXT);
@@ -160,7 +160,7 @@ describe('12.3 cancelled, failed and stale', () => {
     expect(screen.queryByTestId('change-list')).toBeNull();
   });
 
-  it('shows Stale — rerun after an edit, keeps the cards readable and enables run-comparison again', async () => {
+  it('shows Stale, rerun after an edit, keeps the cards readable and enables run-comparison again', async () => {
     const { store } = await mount();
     await runToComplete();
     act(() => store.dispatch({ type: 'scenario/select-tab', index: 0 }));

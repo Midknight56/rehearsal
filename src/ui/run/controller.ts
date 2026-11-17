@@ -19,7 +19,7 @@ type NodeRef = { kind: 'entrance' } | { kind: 'exit' } | { kind: 'station'; id: 
 const sameNode = (a: NodeRef, b: NodeRef): boolean => a.kind === b.kind && (a.kind !== 'station' || (b.kind === 'station' && a.id === b.id));
 
 /** The first route segment without a path, cohort by cohort in scenario order and in route order, as the 4.4 message. */
-function blockedMessage(snapshot: Scenario, unreachable: { from: NodeRef; to: NodeRef }[]): string | null {
+export function blockedMessage(snapshot: Scenario, unreachable: { from: NodeRef; to: NodeRef }[]): string | null {
   if (unreachable.length === 0) return null;
   const name = (node: NodeRef): string => {
     if (node.kind === 'entrance') return `the entrance (${snapshot.layout.entrance[0]}, ${snapshot.layout.entrance[1]})`;

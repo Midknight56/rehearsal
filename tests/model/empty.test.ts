@@ -13,7 +13,7 @@ async function check(input: Scenario) {
   for (const metric of [metrics.queueWait.total, metrics.queueWait.mean, metrics.queueWait.p95, metrics.journeyTime.mean, metrics.journeyTime.p95, metrics.walkingTime.mean]) {
     expect(metric.value).toBeNull();
     expect(metric.n).toBe(0);
-    expect(formatMetricValue(metric)).toBe('—');
+    expect(formatMetricValue(metric)).toBe('n/a');
   }
   expect(metrics.stations[0]?.utilization.value).toBe(0);
   expect(metrics.staffHours.value).toBeCloseTo((2 * 180_000) / 3_600_000, 12);

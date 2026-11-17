@@ -2,7 +2,7 @@
 // differs from the hash the result was computed from; a hash that is still being computed counts as different.
 import type { EditorState } from './types';
 
-export const STALE_LABEL = 'Stale — rerun';
+export const STALE_LABEL = 'Stale, rerun';
 
 export function resultsStatus(state: EditorState, tabIndex: number): 'none' | 'fresh' | 'stale' {
   const results = state.results[tabIndex];

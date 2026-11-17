@@ -18,3 +18,23 @@ export function downloadText(fileName: string, text: string, mime: string): void
   anchor.remove();
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
+
+/** Saves bytes (a workbook) the same way: a Blob URL, one anchor click, revoked straight away. */
+export function downloadBytes(fileName: string, bytes: Uint8Array, mime: string): void {
+  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: mime }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.rel = 'noopener';
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+/** Opens generated HTML in a new tab through a Blob URL (noopener, so the page cannot reach this one). The URL is revoked after a minute. */
+export function openHtmlInNewTab(html: string): void {
+  const url = URL.createObjectURL(new Blob([html], { type: 'text/html;charset=utf-8' }));
+  window.open(url, '_blank', 'noopener');
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
+}

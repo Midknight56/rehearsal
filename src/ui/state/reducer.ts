@@ -5,7 +5,7 @@ import { LIMITS } from '../../domain/limits';
 import type { EditorAction, EditorState, ResultsState, TabKey } from './types';
 import { UNDO_DEPTH } from './undo';
 
-const ID_RULE = (id: string): string => `"${id}" must be 1–64 characters and must not contain "|" or "#".`;
+const ID_RULE = (id: string): string => `"${id}" must be 1 to 64 characters and must not contain "|" or "#".`;
 const idOk = (id: string): boolean => id.length >= 1 && id.length <= LIMITS.maxIdLength && !id.includes('|') && !id.includes('#');
 const same = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 const cellKey = (c: readonly [number, number]): string => `${c[0]},${c[1]}`;
@@ -126,9 +126,9 @@ function stationPatchRefusal(st: Station): string | null {
 }
 
 function settingsRefusal(s: Scenario, patch: Partial<Pick<Scenario, 'title' | 'horizonMs' | 'walkSpeedMps' | 'baseSeed' | 'notes'>>): string | null {
-  if (patch.title !== undefined && (patch.title.length < 1 || patch.title.length > 120)) return 'Title must be 1–120 characters.';
+  if (patch.title !== undefined && (patch.title.length < 1 || patch.title.length > 120)) return 'Title must be 1 to 120 characters.';
   if (patch.baseSeed !== undefined && (patch.baseSeed.length < 1 || patch.baseSeed.length > LIMITS.maxSeedLength || patch.baseSeed.includes('|'))) {
-    return 'Seed must be 1–64 characters and must not contain "|".';
+    return 'Seed must be 1 to 64 characters and must not contain "|".';
   }
   if (patch.walkSpeedMps !== undefined && !(patch.walkSpeedMps > 0 && Number.isFinite(patch.walkSpeedMps))) return 'Walking speed must be greater than 0 metres per second.';
   if (patch.horizonMs !== undefined) {

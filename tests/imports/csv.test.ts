@@ -163,7 +163,7 @@ describe('1.4 and 1.5 messages', () => {
 
   it('id outside ID_FORMAT carries the engine message', async () => {
     const p = await previewCsv([{ table: 'stations', file: fixtureFile('stations-bad-id.csv') }], baselineScenario(), deps());
-    expect(messages(p)).toContain('Row 2, station_id: Station id "a#1" must be 1–64 characters and must not contain "|" or "#".');
+    expect(messages(p)).toContain('Row 2, station_id: Station id "a#1" must be 1 to 64 characters and must not contain "|" or "#".');
   });
 
   it('more than 10 stations and more than 5,000 attendees', async () => {

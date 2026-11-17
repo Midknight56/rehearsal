@@ -38,6 +38,42 @@ test.describe('8.5 import, simulate, replay on one scenario', () => {
   });
 });
 
+// 8.5, print half (task 15): the Print screen shows the numbers the replay shows, through one model.
+test.describe('8.5 print half: identical numbers through the parts that exist', () => {
+  const cases = [
+    { name: 'the baseline', tab: null, seconds: ['4.167 s', '10.000 s', '17.500 s'], hours: 'Staff-hours: 2.00 h' },
+    { name: 'the extra-staff scenario', tab: 'plus-one-checkin', seconds: ['4.167 s', '10.000 s', '17.500 s'], hours: 'Staff-hours: 2.67 h' },
+    { name: 'the shorter route', tab: 'shorter-route', seconds: ['4.167 s', '3.334 s', '7.500 s'], hours: 'Staff-hours: 2.00 h' },
+  ] as const;
+  for (const c of cases) {
+    test(`${c.name}: segments, staff-hours, one hash and a first segment equal to the timeline`, async ({ page }) => {
+      await openFair(page);
+      if (c.tab === null) {
+        await importFile(page, 'public/examples/harbor-hall/harbor-hall.xlsx');
+        await applyImport(page);
+      } else {
+        await page.getByTestId(`scenario-tab-${c.tab}`).click();
+      }
+      const hash = await readHash(page);
+      await simulate(page);
+      const box = page.getByRole('combobox', { name: 'Find attendee' });
+      await box.fill('doors#0000');
+      await box.press('Enter');
+      const timeline = (await page.getByRole('table', { name: 'Timeline of doors#0000' }).textContent()) ?? '';
+      const walked = /Walked to Check-in desk\s*\((\d\d):(\d\d)\.(\d\d\d)\)/.exec(timeline);
+      expect(walked, timeline).not.toBeNull();
+      const timelineMs = Number(walked![1]) * 60_000 + Number(walked![2]) * 1000 + Number(walked![3]);
+
+      await page.getByRole('button', { name: 'Print run sheet' }).click();
+      const sheet = page.locator('#run-sheet');
+      await expect(sheet).toBeVisible();
+      for (const text of [...c.seconds, c.hours, `Scenario hash: ${hash}`]) await expect(sheet).toContainText(text);
+      const first = (await sheet.getByRole('table', { name: 'Walking', exact: true }).getByRole('row').nth(1).getByRole('cell').last().textContent()) ?? '';
+      expect(Number(first.replace(/[^0-9]/g, ''))).toBe(timelineMs);
+      expect(first).toBe('4,167 ms');
+    });
+  }
+});
 test.describe('task 16 labels screenshot', () => {
   test('saves docs/acceptance/img/labels.png: the Game view header with Follow pressed and the landing pitch line', async ({ page }) => {
     await page.goto('/');

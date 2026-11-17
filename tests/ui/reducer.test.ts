@@ -144,8 +144,8 @@ describe('3.9 identifiers', () => {
   it('refuses a duplicate id and an id outside ID_FORMAT with the exact texts', () => {
     const s0 = state0();
     expect(refusal(s0, { type: 'station/rename', id: 'checkin', newId: 'packs' })).toBe('"packs" is already used.');
-    expect(refusal(s0, { type: 'station/rename', id: 'checkin', newId: 'a#1' })).toBe('"a#1" must be 1–64 characters and must not contain "|" or "#".');
-    expect(refusal(s0, { type: 'cohort/rename', id: 'doors', newId: '' })).toBe('"" must be 1–64 characters and must not contain "|" or "#".');
+    expect(refusal(s0, { type: 'station/rename', id: 'checkin', newId: 'a#1' })).toBe('"a#1" must be 1 to 64 characters and must not contain "|" or "#".');
+    expect(refusal(s0, { type: 'cohort/rename', id: 'doors', newId: '' })).toBe('"" must be 1 to 64 characters and must not contain "|" or "#".');
     expect(reduce(s0, { type: 'station/rename', id: 'checkin', newId: 'a|b' })).toBe(s0);
   });
 });

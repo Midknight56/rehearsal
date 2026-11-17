@@ -118,3 +118,24 @@ test.describe('2.7 three ways to the same hash (matrix row 14)', () => {
     expect(await readHash(page)).toBe(expected);
   });
 });
+
+test.describe('2.8 Export workbook round trip (the workbook half of the R7 round trip)', () => {
+  test('the exported workbook, imported into the same layout, gives the same canonical hash', async ({ page }, testInfo) => {
+    await openFair(page);
+    await page.getByLabel('servers of checkin').fill('3');
+    await page.getByLabel('servers of checkin').press('Enter');
+    const edited = await readHash(page);
+    const [download] = await Promise.all([page.waitForEvent('download'), page.getByTestId('export-workbook').click()]);
+    expect(download.suggestedFilename()).toBe(`harbor-hall-community-fair-baseline-${edited.slice(0, 8)}.xlsx`);
+    const file = testInfo.outputPath(download.suggestedFilename());
+    await download.saveAs(file);
+    await expect(page.getByRole('status')).toHaveText(`Exported ${download.suggestedFilename()}.`);
+
+    await page.getByRole('button', { name: 'Undo' }).click();
+    expect(await readHash(page)).not.toBe(edited);
+    await importFile(page, file);
+    await applyImport(page);
+    expect(await readHash(page)).toBe(edited);
+    await expect(page.getByLabel('servers of checkin')).toHaveValue('3');
+  });
+});

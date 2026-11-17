@@ -9,7 +9,7 @@ describe('labels', () => {
   it('has the fixed strings', () => {
     expect(RANGE_LABEL).toBe('variation across these simulated runs');
     expect(REPLAY_NOTE).toBe('This replay is one example run; the comparison numbers come from all 30.');
-    expect(STALE_TEXT).toBe('Stale — rerun');
+    expect(STALE_TEXT).toBe('Stale, rerun');
     expect(PER_PERSON_OFF).toBe('Per-person comparison is off because the attendee populations differ.');
     expect(COMPLETE_TEXT).toBe('30 of 30 paired runs complete');
     expect(REPLICATIONS).toBe(30);

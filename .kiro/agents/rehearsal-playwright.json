@@ -2,7 +2,34 @@
   "name": "rehearsal-playwright",
   "description": "Drives the Rehearsal dev build through the playwright MCP server of .kiro/settings/mcp.json (matrix row 30). Reads the page; edits nothing.",
   "prompt": "You operate a browser only through the playwright MCP server. Do what the user asks on the page, read the text the page shows, and report it verbatim. Do not edit files, do not run shell commands, and list every tool call you made with the tool name as the server reports it.",
-  "tools": ["@playwright"],
-  "allowedTools": ["@playwright"],
-  "includeMcpJson": true
+  "tools": [
+    "@playwright"
+  ],
+  "allowedTools": [
+    "@playwright"
+  ],
+  "includeMcpJson": true,
+  "permissions": {
+    "rules": [
+      {
+        "capability": "mcp",
+        "match": [
+          "playwright/*"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_read",
+        "match": [
+          "./**"
+        ],
+        "effect": "allow"
+      }
+    ]
+  },
+  "kiroUpgrade": {
+    "revision": 3,
+    "fingerprint": "sha256:847b9be425bf22c7a9b8f27c803837abe504d56d7aa9cc3526455dd62b7b6da9",
+    "source": "sha256:6c7e51cf428bf11eba2430f639460d0c5925bcf54384256a732408941b39fcf0"
+  }
 }

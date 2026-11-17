@@ -13,6 +13,7 @@ import { createRunController, type RunController } from './ui/run/controller';
 import { createSimulationClient, type SimulationClient } from './workers/client';
 import { Landing } from './ui/landing/Landing';
 import { PlanScreen } from './ui/plan/PlanScreen';
+import { PrintScreen } from './ui/print/PrintScreen';
 import { StatusRegion } from './ui/StatusRegion';
 import { createEditorStore, type EditorStore } from './ui/state/store';
 import { useEditorState } from './ui/state/useEditorState';
@@ -63,6 +64,8 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
       <StatusRegion store={store} />
       {screen === 'landing' ? (
         <Landing store={store} saved={saved} {...(props.fetchImpl === undefined ? {} : { fetchImpl: props.fetchImpl })} />
+      ) : screen === 'print' ? (
+        <PrintScreen store={store} />
       ) : screen === 'compare' ? (
         <CompareScreen store={store} controller={compareController} saved={saved} />
       ) : (

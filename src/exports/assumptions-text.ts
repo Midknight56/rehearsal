@@ -13,7 +13,7 @@ export const ASSUMPTIONS: readonly string[] = [
 ];
 
 export const LIMITS_TEXT =
-  'Limits: at most 5,000 attendees, 10 stations, 6 station visits per route, 80 × 80 cells, a 360-minute observation window, servers 1–20, 10 saved scenarios, a 2 MiB import file.';
+  'Limits: at most 5,000 attendees, 10 stations, 6 station visits per route, 80 × 80 cells, a 360-minute observation window, servers 1 to 20, 10 saved scenarios, a 2 MiB import file.';
 
 export const NOT_A_FORECAST = 'Scenario results, not a forecast.';
 

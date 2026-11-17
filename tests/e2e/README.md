@@ -36,3 +36,13 @@ not the game view of `src/replay/gameView.ts`, which tasks 11 and 16 exercise. I
 `window.__rehearsal` (`loadScenario(json)`, `gameView()`, `forceRendererFailure(boolean)`, `lastResultJson(tabKey)`, and from
 task 19 `storage.failNextWrite(name)`) exists only when `VITE_REHEARSAL_TEST` is `1`. `hook-absent.spec.ts` checks the
 plain production build.
+
+## Print and run-sheet measurements (task 15)
+
+`document.documentElement.scrollHeight` is never smaller than the viewport height, so a 704 x 1000 viewport can only read 1,000 or
+more and the bound of 960 px could never hold. `print.spec.ts` (the React run sheet) and `run-sheet.spec.ts` (the generator's
+document) therefore use a 704 x 400 viewport under `page.emulateMedia({ media: 'print' })` and read the content height.
+`page.pdf({ format: 'Letter' | 'A4' })` writes the PDFs to `docs/acceptance/img/`; their page objects are counted with
+`/Type\s*/Page[^s]` on the file read as Latin-1 (Windows PowerShell 5.1's `Select-String` decodes the binary as UTF-8 and prints 0).
+`open-run-sheet` and `open-printable-comparison` open a Blob URL in a new tab with `noopener`, so the specs wait for
+`context.waitForEvent('page')`, not for a popup of the opener.

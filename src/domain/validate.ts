@@ -26,8 +26,8 @@ const cap = (word: string): string => word.charAt(0).toUpperCase() + word.slice(
 export const MESSAGES: Record<IssueCode, (args: Args) => string> = {
   SCHEMA_VERSION: (a) => `Unsupported schemaVersion ${a.v}; this build reads version 1.`,
   MODEL_VERSION_FORMAT: (a) => `modelVersion must look like 0.1.0; got "${a.v}".`,
-  SEED_FORMAT: () => 'Base seed must be 1–64 characters and must not contain "|".',
-  ID_FORMAT: (a) => `${cap(String(a.kind))} id "${a.id}" must be 1–64 characters and must not contain "|" or "#".`,
+  SEED_FORMAT: () => 'Base seed must be 1 to 64 characters and must not contain "|".',
+  ID_FORMAT: (a) => `${cap(String(a.kind))} id "${a.id}" must be 1 to 64 characters and must not contain "|" or "#".`,
   DUPLICATE_ID: (a) => `Duplicate ${a.kind} id "${a.id}".`,
   HORIZON_RANGE: (a) => `Observation window must be a whole number of milliseconds between 1 and ${grouped(LIMITS.maxHorizonMs)} (6 hours); got ${a.v}.`,
   GRID_SIZE: (a) => `Grid must be a whole number of cells, between 1 × 1 and ${LIMITS.maxCols} × ${LIMITS.maxRows}; got ${a.cols} × ${a.rows}.`,

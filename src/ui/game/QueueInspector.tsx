@@ -12,7 +12,7 @@ export function QueueInspector(props: { stationLabel: string | null; clockMs: nu
   const lines = [
     `Waiting: ${s.waiting}`,
     `In service: ${s.inService} of ${s.servers} servers`,
-    `Next service ends at ${s.nextServiceEndMs === null ? '\u2014' : formatMinutesSeconds(s.nextServiceEndMs)}`,
+    `Next service ends at ${s.nextServiceEndMs === null ? 'n/a' : formatMinutesSeconds(s.nextServiceEndMs)}`,
     `Longest current wait: ${formatMinutesSeconds(s.longestWaitMs)}`,
   ];
   return (

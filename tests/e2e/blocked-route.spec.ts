@@ -15,6 +15,6 @@ test('blocking every corridor between checkin and packs blocks the run and keeps
   const message = 'Run blocked: no path from Check-in desk (checkin) to Welcome packs (packs). Clear a corridor on the floor plan or move a station.';
   await expect(page.getByText(message).first()).toBeVisible();
   expect(await readStatus(page)).toBe(message);
-  await expect(page.getByText('Stale — rerun').first()).toBeVisible();
+  await expect(page.getByText('Stale, rerun').first()).toBeVisible();
   await expect(page.getByRole('table', { name: /result|metric/i }).first()).toBeVisible();
 });

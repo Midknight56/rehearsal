@@ -270,7 +270,7 @@ function parseSettings(table: SourceTable, ctx: { formulaCells: CellRef[] }): { 
         const text = (min: number, max: number, name: string): string | null => {
           const t = readText(rc, 'value');
           if (t !== null && (t.length < min || t.length > max)) {
-            fail(rc, 'bad-settings', key, `${name} must be ${min}–${max} characters (got ${row.cells.value?.kind === 'text' ? `"${t}"` : t}).`, valueRef);
+            fail(rc, 'bad-settings', key, `${name} must be ${min} to ${max} characters (got ${row.cells.value?.kind === 'text' ? `"${t}"` : t}).`, valueRef);
             return null;
           }
           return t;

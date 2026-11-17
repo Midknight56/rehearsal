@@ -104,14 +104,14 @@ test.describe('4.1 undo and redo', () => {
 });
 
 test.describe('4.3 stale label (matrix row 17, stale portion; task 9)', () => {
-  test('Stale — rerun appears after an edit and goes after undo', async ({ page }) => {
+  test('Stale, rerun appears after an edit and goes after undo', async ({ page }) => {
     await openFair(page);
     await simulate(page);
-    await expect(page.getByText('Stale — rerun')).toHaveCount(0);
+    await expect(page.getByText('Stale, rerun')).toHaveCount(0);
     await page.getByLabel('servers of checkin').fill('2');
     await page.getByLabel('servers of checkin').press('Enter');
-    await expect(page.getByText('Stale — rerun').first()).toBeVisible();
+    await expect(page.getByText('Stale, rerun').first()).toBeVisible();
     await page.getByRole('button', { name: 'Undo' }).click();
-    await expect(page.getByText('Stale — rerun')).toHaveCount(0);
+    await expect(page.getByText('Stale, rerun')).toHaveCount(0);
   });
 });

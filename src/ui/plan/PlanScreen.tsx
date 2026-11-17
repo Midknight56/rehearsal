@@ -20,6 +20,7 @@ import { OpenJson } from '../import/OpenJson';
 import type { SavedScenarios } from '../saved';
 import { SaveBar } from '../SaveBar';
 import { SaveError } from '../SaveError';
+import { PrintControls } from '../print/PrintControls';
 
 export function PlanScreen({ store, controller, saved }: { store: EditorStore; controller: RunController; saved?: SavedScenarios }): ReactElement {
   const state = useEditorState(store);
@@ -65,6 +66,7 @@ export function PlanScreen({ store, controller, saved }: { store: EditorStore; c
         <Templates />
         <button type="button" onClick={() => { requestHeadingFocus(); store.dispatch({ type: 'screen/set', screen: 'compare' }); }}>Compare</button>
         <OpenJson store={store} label="Open JSON" />
+        <PrintControls store={store} />
         {saved === undefined ? null : <SaveBar store={store} saved={saved} />}
         <label>
           Motion{' '}

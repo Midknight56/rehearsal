@@ -14,7 +14,7 @@ describe('display formatters', () => {
   it('writes display units', () => {
     expect(formatMinutes(1_200_000)).toBe('20 min');
     expect(formatMinutes(750_000)).toBe('12.5 min');
-    expect(formatWindow(0, 1_200_000)).toBe('0–20 min');
+    expect(formatWindow(0, 1_200_000)).toBe('0 to 20 min');
     expect(formatService({ kind: 'triangular', minS: 8, modeS: 15, maxS: 22 })).toBe('triangular 8/15/22 s');
     expect(formatService({ kind: 'constant', seconds: 60 })).toBe('constant 60 s');
     expect(formatCell([34, 12])).toBe('(34,12)');
@@ -90,7 +90,7 @@ describe('diffScenarios (requirements 4.1 to 4.6)', () => {
     expect(texts).toContain('Observation window 40 min → 60 min');
     expect(texts).toContain('Seed harbor-hall-2026 → other');
     expect(texts).toContain('Walking speed 1.2 m/s → 1.0 m/s');
-    expect(texts).toContain('Cohort "doors": window 0–20 min → 0–30 min');
+    expect(texts).toContain('Cohort "doors": window 0 to 20 min → 0 to 30 min');
     expect(texts).toContain('Cohort "doors": arrivals uniform → even');
     expect(texts).toContain('Cohort "doors": route checkin → packs → packs');
   });

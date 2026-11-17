@@ -38,7 +38,7 @@ export function percentile95(values: number[]): number | null {
  * with two decimals, and one `*` after a conditioned number.
  */
 export function formatMetricValue(m: MetricValue): string {
-  if (m.value === null) return '—';
+  if (m.value === null) return 'n/a';
   let text: string;
   switch (m.unit) {
     case 'ms': text = `${(m.value / 1000).toFixed(1)} s`; break;

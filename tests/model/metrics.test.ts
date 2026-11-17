@@ -23,7 +23,7 @@ describe('rows 7.3 and 7.5: percentile index and formatting', () => {
   });
 
   it('formats each unit', () => {
-    expect(formatMetricValue(metric(null, 'ms'))).toBe('—');
+    expect(formatMetricValue(metric(null, 'ms'))).toBe('n/a');
     expect(formatMetricValue(metric(30_000, 'ms'))).toBe('30.0 s');
     expect(formatMetricValue(metric(1, 'ratio'))).toBe('100.0%');
     expect(formatMetricValue(metric(2, 'hours'))).toBe('2.00 h');
@@ -99,7 +99,7 @@ describe('rows 1, 2, 6, 7 and 11: metrics over runSchedule output', () => {
     for (const metric of [m.queueWait.total, m.queueWait.mean, m.queueWait.p95, m.journeyTime.mean, m.journeyTime.p95, m.walkingTime.mean]) {
       expect(metric.value).toBeNull();
       expect(metric.n).toBe(0);
-      expect(formatMetricValue(metric)).toBe('—');
+      expect(formatMetricValue(metric)).toBe('n/a');
     }
     expect(m.stations[0]?.utilization.value).toBe(0);
     expect(m.staffHours.value).toBeCloseTo(180_000 / 3_600_000, 12);

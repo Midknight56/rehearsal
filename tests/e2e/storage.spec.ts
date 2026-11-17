@@ -148,7 +148,7 @@ test.describe('10.6 the comparison summary', () => {
     await expect(page.getByTestId('save-error')).toHaveText('Could not save: storage quota exceeded.');
     await expect(page.getByTestId('change-list')).toBeVisible();
     await expect(page.getByTestId('compare-status')).toHaveText(COMPLETE_TEXT);
-    await expect(page.getByTestId('download-comparison-csv')).toHaveCount(0);
+    await expect(page.getByTestId('download-comparison-csv')).toBeVisible();
   });
 });
 
