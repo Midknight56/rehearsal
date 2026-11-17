@@ -1,8 +1,12 @@
+import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { badgeLines } from '../../src/replay/badges';
+import { queueColour, queueSlot } from '../../src/replay/queueLine';
+import { checkProperty } from '../ui/property';
 import { createPool } from '../../src/replay/pool';
 import { buildIndex } from '../../src/replay/traceIndex';
 import { sampleAt, visibleSet } from '../../src/replay/sampler';
-import { cap1200 } from './generators';
+import { cap1200, makeTrace } from './generators';
 
 describe('visibleSet (requirement 6.4)', () => {
   it('with 1,200 attendees arrived and none exited draws the 1,000 lexically smallest and aggregates 200', () => {
@@ -47,5 +51,43 @@ describe('sprite pool (invariant I7)', () => {
     pool.releaseAll();
     expect(pool.used).toBe(0);
     expect(pool.allocated).toBe(4);
+  });
+});
+
+describe('P10 sprite cap (requirement 6.4)', () => {
+  it('draws min(present, cap) of the lexically smallest ids and counts every other attendee in exactly one aggregate', async () => {
+    const inputs = fc.record({ attendees: fc.integer({ min: 1, max: 60 }), stations: fc.integer({ min: 1, max: 3 }), seed: fc.integer({ min: 0, max: 1_000_000 }), at: fc.double({ min: 0, max: 1, noNaN: true }), cap: fc.integer({ min: 1, max: 40 }) });
+    await checkProperty('P10 sprite cap', inputs, ({ attendees, stations, seed, at, cap }) => {
+      const made = makeTrace({ attendees, stations, seed });
+      const sample = sampleAt(buildIndex(made.trace, made.stations), Math.floor(at * made.endMs));
+      const present = sample.arrived - sample.exited;
+      const { drawn, aggregated } = visibleSet(sample, cap);
+      expect(drawn).toHaveLength(Math.min(present, cap));
+      const ids = sample.attendees.filter((a) => a.phase === 'walking' || a.phase === 'waiting' || a.phase === 'in-service').map((a) => a.id).sort();
+      expect(drawn.map((a) => a.id)).toEqual(ids.slice(0, cap));
+      expect(drawn.length + aggregated.reduce((n, g) => n + g.waiting + g.inService + g.walking, 0)).toBe(present);
+    });
+  });
+});
+
+describe('queue lines and badges (requirements 6.4 and 6.6)', () => {
+  it('slots run east of the station in join order and wrap after ten', () => {
+    expect(queueSlot([4, 1], 0)).toEqual([5, 1]);
+    expect(queueSlot([4, 1], 1)[0]).toBeGreaterThan(5);
+    expect(queueSlot([4, 1], 10)[0]).toBe(5);
+    expect(queueSlot([4, 1], 10)[1]).toBeGreaterThan(1);
+  });
+
+  it('the colour changes with the waiting count and stops at saturation', () => {
+    expect(queueColour(0)).not.toBe(queueColour(10));
+    expect(queueColour(10)).not.toBe(queueColour(20));
+    expect(queueColour(20)).toBe(queueColour(500));
+  });
+
+  it('writes +<n> waiting, +<n> in service and +<n> walking, and nothing for a zero count', () => {
+    expect(badgeLines([{ stationId: 'st0', waiting: 199, inService: 1, walking: 0 }, { stationId: 'entrance', waiting: 0, inService: 0, walking: 4 }, { stationId: 'st1', waiting: 0, inService: 0, walking: 0 }])).toEqual([
+      { stationId: 'st0', lines: ['+199 waiting', '+1 in service'] },
+      { stationId: 'entrance', lines: ['+4 walking'] },
+    ]);
   });
 });

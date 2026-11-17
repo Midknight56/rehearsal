@@ -198,3 +198,134 @@ td input {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* Floor plan: the SVG sits in a focusable, scrollable wrapper; markers carry a number and a label, never colour alone. */
+.floorplan-wrapper {
+  overflow: auto;
+  max-height: 60vh;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--board);
+}
+
+.floorplan svg {
+  display: block;
+  touch-action: none;
+}
+
+.floorplan .cell {
+  fill: var(--card);
+  stroke: var(--line);
+  stroke-width: 0.5;
+}
+
+.floorplan .cell.blocked {
+  fill: url(#blocked-hatch);
+}
+
+.floorplan .hatch-ground {
+  fill: var(--board);
+}
+
+.floorplan .hatch-line {
+  stroke: var(--ink-muted);
+  stroke-width: 2;
+}
+
+.floorplan .gate {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.floorplan .gate-text,
+.floorplan .marker-glyph {
+  fill: var(--ink);
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.floorplan .marker rect {
+  fill: var(--candidate);
+  stroke: var(--board);
+  stroke-width: 1;
+  cursor: grab;
+}
+
+.floorplan .marker.selected rect {
+  stroke: var(--focus);
+  stroke-width: 3;
+}
+
+.floorplan .marker-glyph {
+  fill: var(--board);
+  pointer-events: none;
+}
+
+.floorplan .marker-label,
+.floorplan .route-label {
+  fill: var(--ink);
+  font-size: 8px;
+  paint-order: stroke;
+  stroke: var(--board);
+  stroke-width: 2.5px;
+  pointer-events: none;
+}
+
+.floorplan .route polyline,
+.floorplan .route line {
+  stroke: var(--candidate);
+  stroke-width: 2;
+}
+
+.floorplan .cursor {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 2;
+}
+/* Game view panel: the canvas sits in a focusable wrapper; the controls, the timeline and the inspector are ordinary DOM. */
+.game-wrapper {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--board);
+  overflow: hidden;
+  max-width: 100%;
+}
+
+.game-canvas {
+  line-height: 0;
+  min-height: 2px;
+}
+
+.game-canvas canvas {
+  max-width: 100%;
+}
+
+.speed {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.find-attendee .options {
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+  max-height: 10em;
+  overflow: auto;
+  border: 1px solid var(--line);
+}
+
+.find-attendee .options li {
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.find-attendee .options li[aria-selected="true"] {
+  border-left: 4px solid var(--candidate);
+  font-weight: 600;
+}
+
+input[type="range"] {
+  min-width: 10em;
+  max-width: 100%;
+}

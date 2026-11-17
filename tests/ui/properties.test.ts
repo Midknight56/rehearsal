@@ -13,8 +13,13 @@ import { resultsStatus } from '../../src/ui/state/selectors';
 import type { EditorAction, EditorState } from '../../src/ui/state/types';
 import { HOSTILE_STRINGS, makeEdits, makeScenario, makeState } from './generators';
 import { checkProperty } from './property';
+import { createPathCache, describeNode } from '../../src/spatial/path-cache';
+import { createRunController } from '../../src/ui/run/controller';
+import type { RunResult } from '../../src/simulation/simulate';
+import { createFakePort } from './fakePort';
+import { harborHall } from './generators';
 
-// P8 with task 9, P14 with task 12, P15 with task 13.
+// P14 with task 12, P15 with task 13.
 describe('generators', () => {
   it('makeScenario is valid by construction: validateScenario reports no issue and no warning', async () => {
     await checkProperty('makeScenario is valid by construction', fc.integer({ min: 0, max: 1_000_000 }), (seed) => {
@@ -212,6 +217,77 @@ describe('P7 stale derivation (requirement 4.3, invariant I4)', () => {
         const h1 = await scenarioHash(next.scenario);
         const settled = reduce(next, { type: 'hash/computed', tabIndex: 0, revision: next.scenario.revision, hash: h1 });
         expect(resultsStatus(settled, 0)).toBe(h1 === h0 ? 'fresh' : 'stale');
+      }
+    });
+  });
+});
+
+describe('P8 late-callback rejection (requirement 5.4, invariant I5)', () => {
+  type Op =
+    | { op: 'start' }
+    | { op: 'cancel' }
+    | { op: 'progress'; run: number }
+    | { op: 'result'; run: number; match: boolean }
+    | { op: 'resolve'; run: number; outcome: 'complete' | 'cancelled' | 'error' };
+  const ops = fc.array(
+    fc.oneof(
+      fc.constant<Op>({ op: 'start' }),
+      fc.constant<Op>({ op: 'cancel' }),
+      fc.record({ op: fc.constant('progress' as const), run: fc.nat(8) }),
+      fc.record({ op: fc.constant('result' as const), run: fc.nat(8), match: fc.boolean() }),
+      fc.record({ op: fc.constant('resolve' as const), run: fc.nat(8), outcome: fc.constantFrom('complete' as const, 'cancelled' as const, 'error' as const) }),
+    ),
+    { maxLength: 40 },
+  );
+
+  it('the reducer receives only the callbacks of the active handle, and no result whose hash differs from the snapshot hash', async () => {
+    await checkProperty('P8 late-callback rejection', ops, async (sequence) => {
+      const port = createFakePort();
+      const actions: EditorAction[] = [];
+      const controller = createRunController(port, (a) => actions.push(a), { pathCache: createPathCache, describe: describeNode });
+      const { baseline } = harborHall();
+      let active: { runId: number; cancelled: boolean; index: number } | null = null;
+      const settled = new Set<number>();
+      const fakeResult = (hash: string): RunResult => ({ scenarioHash: hash, replication: 0 }) as unknown as RunResult;
+      for (const step of sequence) {
+        const before = actions.length;
+        let expected: string[] = [];
+        const target = port.runs.length === 0 || step.op === 'start' || step.op === 'cancel' ? undefined : port.runs[step.run % port.runs.length];
+        const isActive = target !== undefined && active !== null && target.handle.runId === active.runId;
+        if (step.op === 'start') {
+          const runId = controller.start(baseline, 'h', 0);
+          if (active === null) {
+            expect(runId).toBe(port.runs[port.runs.length - 1]?.handle.runId);
+            active = { runId: runId as number, cancelled: false, index: port.runs.length - 1 };
+            expected = ['run/started'];
+          } else expect(runId).toBeNull();
+        } else if (step.op === 'cancel') {
+          controller.cancel();
+          if (active !== null && !active.cancelled) {
+            active.cancelled = true;
+            expected = ['run/cancelling'];
+          }
+        } else if (target !== undefined && step.op === 'progress') {
+          target.emitProgress(1, 1);
+          if (isActive && active !== null && !active.cancelled) expected = ['run/progress'];
+        } else if (target !== undefined && step.op === 'result') {
+          target.emitResult(fakeResult(step.match ? 'h' : 'other'));
+          if (isActive && active !== null && !active.cancelled && step.match) expected = ['run/result'];
+        } else if (target !== undefined && step.op === 'resolve') {
+          const first = !settled.has(target.handle.runId);
+          settled.add(target.handle.runId);
+          target.resolve(step.outcome === 'complete' ? { status: 'complete', results: [] } : { status: step.outcome, message: 'm' });
+          if (first && isActive) {
+            expected = ['run/finished'];
+            active = null;
+          }
+        }
+        for (let i = 0; i < 4; i += 1) await Promise.resolve();
+        const added = actions.slice(before);
+        expect(added.map((a) => a.type)).toEqual(expected);
+        for (const a of added) {
+          if (a.type === 'run/result') expect(a.result.scenarioHash).toBe(a.hash);
+        }
       }
     });
   });

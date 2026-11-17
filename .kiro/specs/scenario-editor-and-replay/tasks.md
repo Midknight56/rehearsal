@@ -59,34 +59,34 @@ Every task ends with its `Verify:` line passing and one `docs/kiro-log.md` row t
   - _Requirements: 1.1, 1.3, 1.6, 1.7, 1.8, 2.1, 2.3, 2.5, 2.7_
   - _Owner: kiro_
 
-- [ ] 8. Floor plan: SVG grid, drag, cell cursor, keyboard nudge, obstacle keys and route polylines
+- [x] 8. Floor plan: SVG grid, drag, cell cursor, keyboard nudge, obstacle keys and route polylines
   - Create `src/ui/floorplan/FloorPlan.tsx` (the wrapper with `tabindex="0"`, `role="application"`, `aria-label="Floor plan"`, the key help of 9.1 including Escape, `Zoom in`, `Zoom out`, `Fit`), `grid.ts` (cell geometry, zoom in [0.5, 4], pan), `drag.ts` (pointer events to `drag/start`, `drag/move`, `drag/end`, `drag/cancel`; commit once on drop; Escape cancels a drag), `cursor.ts` (arrows nudge the selected station with `via: 'nudge'` or move the cell cursor; Escape clears a station or cohort selection to the cursor; Space toggles blocked; `E`/`X` set entrance and exit; refusals through `refusal`) and `routes.ts` (one `createPathCache` per `cache.key`; `cache.lookup` per consecutive pair of `['entrance', …route, 'exit']` of the selected cohort; labels `<metres> m · <seconds> s` by the rule of 3.8; a pair in `cache.unreachable` drawn dashed with `no path`).
   - Fill `tests/ui/floorplan.test.tsx`, extend `editor-agreement.test.tsx` to the real floor plan (I1, P4), and fill `tests/e2e/editor.spec.ts` for 3.2–3.7 and 4.1 with the exact texts.
   - Verify: `npx vitest run --config vitest.ui.config.ts tests/ui/floorplan.test.tsx tests/ui/editor-agreement.test.tsx` passes; `npx playwright test tests/e2e/editor.spec.ts -g "3\.|4\.1"` passes (*verify* the grep form; the 4.3 case is task 9's); `npm run typecheck` passes.
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.7, 3.8, 4.1_
   - _Owner: kiro_
 
-- [ ] 9. Run controller, run panel, blocked routes and the result tables
+- [x] 9. Run controller, run panel, blocked routes and the result tables
   - Create `src/ui/run/port.ts` (`WorkerPort = Pick<SimulationClient, 'run' | 'cancel' | 'currentRunId'>`), `controller.ts` (`createRunController`: the route-order pre-check over `createPathCache(snapshot).unreachable` with the 4.4 message; `port.run(snapshot, [0], { trace: true, onProgress, onResult })`; the active handle; every callback dropped unless it comes from the active handle, and `onResult` dropped when `result.scenarioHash` differs from the snapshot's; `cancel()` forwarding to `port.cancel()` with the outcome read from `handle.done`; Simulate or a tab switch during a run cancels first; no timer, no message parsing, no run numbering), `RunPanel.tsx` (`Simulate`, `Cancel`, `Simulating… <done> of <total>`, `Cancelling…`, `Run cancelled.` with the adapter's message, `Run blocked: …`, `Run failed: <message>`, the completion announcement of 5.2 through `setStatus`), `src/ui/results/ResultTables.tsx` and `format.ts` (every `MetricValue` through `formatMetricValue`, with units and `n`; `mm:ss.mmm` only for trace timestamps; the `Stale — rerun` badge from `resultsStatus`).
   - Fill `tests/ui/run-controller.test.ts` (with `fakePort.ts`: the run started with the snapshot and `[0]`, `onProgress` dispatched, a late `onResult` from a superseded handle dropped while the next run completes, a hash mismatch dropped, the cancelled outcome shown verbatim for both adapter messages, Simulate and tab switch during a run, a blocked route requesting nothing; P8), `run-panel.test.tsx` and `results.test.tsx` (`30.0 s`, `100.0%`, `2.00 h`, `—`); fill `tests/e2e/run-controls.spec.ts`, `tests/e2e/blocked-route.spec.ts` and the 4.3 case of `tests/e2e/editor.spec.ts`.
   - Verify: `npx vitest run --config vitest.ui.config.ts tests/ui/run-controller.test.ts tests/ui/run-panel.test.tsx tests/ui/results.test.tsx` passes; `npx playwright test tests/e2e/run-controls.spec.ts tests/e2e/blocked-route.spec.ts tests/e2e/editor.spec.ts` passes against the real engine, with the cancel case printing the measured interval or `not run (run completed before cancel)`; `npm run typecheck` passes.
   - _Requirements: 4.3, 4.4, 4.5, 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7_
   - _Owner: kiro_
 
-- [ ] 10. Game view core
-  - [ ] 10.1 Trace index, sampler and clock (pure, no PixiJS)
+- [x] 10. Game view core
+  - [x] 10.1 Trace index, sampler and clock (pure, no PixiJS)
     - Create `src/replay/traceIndex.ts` (`buildIndex`; the only file reading raw `Trace` fields), `sampler.ts` (`sampleAt`, `timelineOf`, `visibleSet`; walking positions interpolated linearly along the cells of the trace path whose `id` equals the segment's `pathId` (an id map, because `trace.paths` holds only referenced paths) between `startMs` and `endMs`; `server` shown as `server + 1`) and `clock.ts` (`advance`, `seek`, `step`).
     - Fill `tests/replay/sampler.test.ts` (`three-people.json`, `unfinished.json`, P9, P13, referential transparency) and `clock.test.ts` (P11).
     - Verify: `npx vitest run --config vitest.ui.config.ts tests/replay/sampler.test.ts tests/replay/clock.test.ts` passes with P9, P11 and P13 at 200 runs; `npm run typecheck` passes.
     - _Requirements: 6.2, 6.3, 6.6, 7.4_
     - _Owner: kiro_
-  - [ ] 10.2 Sprite pool, camera, queue lines and badges
+  - [x] 10.2 Sprite pool, camera, queue lines and badges
     - Create `src/replay/pool.ts` (1,000 slots allocated at `load`, `acquire`/`release`, never a second allocation), `camera.ts` (`centerOn`, zoom [0.5, 4]), `queueLine.ts` (slots beside the station ordered by join time, colour by count) and `badges.ts` (`+<n> waiting`, `+<n> in service`, `+<n> walking`).
     - Fill `tests/replay/pool.test.ts` (P10, I7) and `camera.test.ts` (P12).
     - Verify: `npx vitest run --config vitest.ui.config.ts tests/replay/pool.test.ts tests/replay/camera.test.ts` passes with P10 and P12 at 200 runs; `npm run typecheck` passes.
     - _Requirements: 6.4, 6.6, 6.9, 7.1, 7.7_
     - _Owner: kiro_
-  - [ ] 10.3 Renderer, fallback and the boundary test
+  - [x] 10.3 Renderer, fallback and the boundary test
     - Create `src/replay/fallback.ts` (the `{ ok: false }` result with the sampler-only handle) and `gameView.ts` (`createGameView`: one canvas, resolution `min(dpr, 2)`, the layers of the design, the ticker driving only `advance` and the redraw, `onClock` at most every 100 ms, `onHit`, `onFollowEnd`, the visibility listener, `setGhost` storing its argument for task 18, `debug()` with `framesLast2s`, `destroy()` after which `debug()` throws `Game view destroyed`; the PixiJS 8.22.0 option and ticker names recorded in a comment).
     - Fill `tests/ui/replay-boundary.test.ts` (I6, with the allow-list of 5.6).
     - Verify: `npx vitest run --config vitest.ui.config.ts tests/replay tests/ui/replay-boundary.test.ts` passes; `npm run typecheck` and `npm run build` pass.

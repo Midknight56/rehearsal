@@ -1,7 +1,10 @@
+import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
+import { formatTimestamp } from '../../src/replay/format';
+import { checkProperty } from '../ui/property';
 import { buildIndex } from '../../src/replay/traceIndex';
 import { sampleAt, timelineOf, type Sample } from '../../src/replay/sampler';
-import { loadTraceFixture } from './generators';
+import { loadTraceFixture, makeTrace } from './generators';
 
 const labels = { desk: 'Desk' };
 const three = () => {
@@ -69,5 +72,56 @@ describe('purity', () => {
     for (let i = 0; i < 1000; i++) sampleAt(index, (i * 37) % 14_000);
     expect(JSON.stringify(f.trace)).toBe(before);
     expect(sampleAt(index, 4321)).toEqual(sampleAt(index, 4321));
+  });
+});
+
+const traceInputs = fc.record({ attendees: fc.integer({ min: 1, max: 40 }), stations: fc.integer({ min: 1, max: 4 }), seed: fc.integer({ min: 0, max: 1_000_000 }), at: fc.double({ min: 0, max: 1, noNaN: true }) });
+
+describe('P9 sample conservation (requirements 6.3 and 6.4)', () => {
+  it('every arrived attendee is in exactly one phase, waiting indices are unique per station, and sampling is pure', async () => {
+    await checkProperty('P9 sample conservation', traceInputs, ({ attendees, stations, seed, at }) => {
+      const made = makeTrace({ attendees, stations, seed });
+      const before = JSON.stringify(made.trace);
+      const index = buildIndex(made.trace, made.stations);
+      const t = Math.floor(at * made.endMs);
+      const s = sampleAt(index, t);
+      const count = (phase: string) => s.attendees.filter((a) => a.phase === phase).length;
+      expect(s.attendees.filter((a) => a.phase !== 'not-arrived')).toHaveLength(count('walking') + count('waiting') + count('in-service') + count('exited'));
+      expect(s.arrived).toBe(attendees - count('not-arrived'));
+      expect(s.exited).toBe(count('exited'));
+      for (const [id, station] of Object.entries(s.perStation)) {
+        const waiting = s.attendees.filter((a) => a.phase === 'waiting' && a.stationId === id);
+        expect(waiting.map((a) => a.queueIndex).sort((p, q) => (p as number) - (q as number))).toEqual(waiting.map((_, i) => i));
+        expect(station.waiting).toBe(waiting.length);
+      }
+      expect(sampleAt(index, t)).toEqual(s);
+      expect(JSON.stringify(made.trace)).toBe(before);
+    });
+  });
+});
+
+describe('P13 timeline (requirement 7.4)', () => {
+  it('rows are non-decreasing, every wait equals start minus join, and the kinds follow the grammar', async () => {
+    await checkProperty('P13 timeline', traceInputs, ({ attendees, stations, seed }) => {
+      const made = makeTrace({ attendees, stations, seed });
+      const index = buildIndex(made.trace, made.stations);
+      const labels = Object.fromEntries(made.stations.map((s) => [s.id, s.label]));
+      for (const a of made.trace.attendees) {
+        const rows = timelineOf(index, a.id, labels);
+        for (let i = 1; i < rows.length; i++) expect((rows[i] as { tMs: number }).tMs).toBeGreaterThanOrEqual((rows[i - 1] as { tMs: number }).tMs);
+        const letters = rows
+          .map((r) => (r.label === 'Arrived' ? 'A' : r.label === 'Walked to exit' ? 'X' : r.label.startsWith('Walked to') ? 'W' : r.label.startsWith('Joined') ? 'J' : r.label.startsWith('Service started') ? 'S' : r.label === 'Service ended' ? 'E' : r.label === 'Exited' ? 'Z' : '?'))
+          .join('');
+        expect(letters).toMatch(/^A(WJSE)*XZ$/);
+        let joinedAt = -1;
+        for (const r of rows) {
+          if (r.label.startsWith('Joined')) joinedAt = r.tMs;
+          if (r.label.startsWith('Service started')) {
+            expect(r.tMs - joinedAt).toBeGreaterThanOrEqual(0);
+            expect(r.detail).toBe(`${formatTimestamp(r.tMs)} \u00b7 waited ${formatTimestamp(r.tMs - joinedAt)}`);
+          }
+        }
+      }
+    });
   });
 });

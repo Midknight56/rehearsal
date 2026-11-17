@@ -3,6 +3,8 @@
 // print and compare screens.
 import { useEffect, useRef, type ReactElement } from 'react';
 import { scenarioHash } from './domain/hash';
+import { createPathCache, describeNode } from './spatial/path-cache';
+import { createRunController } from './ui/run/controller';
 import { createSimulationClient, type SimulationClient } from './workers/client';
 import { Landing } from './ui/landing/Landing';
 import { PlanScreen } from './ui/plan/PlanScreen';
@@ -19,6 +21,13 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
   const clientRef = useRef<SimulationClient | null>(null);
   if (clientRef.current === null) clientRef.current = props.client ?? createSimulationClient();
   const client = clientRef.current;
+  const controllerRef = useRef<ReturnType<typeof createRunController> | null>(null);
+  if (controllerRef.current === null) {
+    const controller = createRunController(client, store.dispatch, { pathCache: createPathCache, describe: describeNode });
+    store.setCancelHook(() => controller.cancel());
+    controllerRef.current = controller;
+  }
+  const controller = controllerRef.current;
   const { screen } = useEditorState(store);
 
   useEffect(() => {
@@ -36,7 +45,7 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
       {screen === 'landing' ? (
         <Landing store={store} {...(props.fetchImpl === undefined ? {} : { fetchImpl: props.fetchImpl })} />
       ) : (
-        <PlanScreen store={store} />
+        <PlanScreen store={store} controller={controller} />
       )}
       <StatusRegion store={store} />
     </>

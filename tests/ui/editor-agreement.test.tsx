@@ -1,24 +1,12 @@
 // @vitest-environment jsdom
 import { act, screen } from '@testing-library/react';
-import { useSyncExternalStore } from 'react';
 import { describe, expect, it } from 'vitest';
 import type { Scenario } from '../../src/domain/scenario';
+import { FloorPlan } from '../../src/ui/floorplan/FloorPlan';
 import { StationsTable } from '../../src/ui/plan/StationsTable';
 import type { EditorStore } from '../../src/ui/state/store';
 import type { EditorAction } from '../../src/ui/state/types';
 import { makeStore, renderWith } from './render';
-
-/** Stands in for the floor plan until task 8: one marker per station with its data-cell, read from the same store. */
-function MarkerStub({ store }: { store: EditorStore }) {
-  const state = useSyncExternalStore(store.subscribe, store.getState);
-  return (
-    <svg aria-label="Floor plan stub">
-      {state.scenario.stations.map((s) => (
-        <g key={s.id} data-station={s.id} data-cell={`${s.cell[0]},${s.cell[1]}`} />
-      ))}
-    </svg>
-  );
-}
 
 function expectAgreement(store: EditorStore): void {
   const scenario: Scenario = store.getState().scenario;
@@ -46,20 +34,20 @@ describe('I1 agreement after every edit kind (requirement 3.1)', () => {
 
   it('agrees on the first render', () => {
     const store = makeStore();
-    renderWith(store, (s) => <><StationsTable store={s} /><MarkerStub store={s} /></>);
+    renderWith(store, (s) => <><StationsTable store={s} /><FloorPlan store={s} /></>);
     expectAgreement(store);
   });
 
   it.each(edits)('agrees after %s', (_name, action) => {
     const store = makeStore();
-    renderWith(store, (s) => <><StationsTable store={s} /><MarkerStub store={s} /></>);
+    renderWith(store, (s) => <><StationsTable store={s} /><FloorPlan store={s} /></>);
     act(() => store.dispatch(action));
     expectAgreement(store);
   });
 
   it('agrees after a import/apply that replaces the stations', () => {
     const store = makeStore();
-    renderWith(store, (s) => <><StationsTable store={s} /><MarkerStub store={s} /></>);
+    renderWith(store, (s) => <><StationsTable store={s} /><FloorPlan store={s} /></>);
     const base = store.getState().scenario;
     const candidate: Scenario = { ...base, revision: base.revision + 1, stations: base.stations.map((s) => ({ ...s, cell: [s.cell[0] + 1, s.cell[1]] })) };
     act(() => store.dispatch({ type: 'import/apply', candidate, sources: ['stations.csv'] }));
@@ -68,7 +56,7 @@ describe('I1 agreement after every edit kind (requirement 3.1)', () => {
 
   it('agrees after a refused move: nothing changed anywhere', () => {
     const store = makeStore();
-    renderWith(store, (s) => <><StationsTable store={s} /><MarkerStub store={s} /></>);
+    renderWith(store, (s) => <><StationsTable store={s} /><FloorPlan store={s} /></>);
     act(() => store.dispatch({ type: 'station/move', id: 'packs', cell: [16, 21], via: 'form' }));
     expectAgreement(store);
     expect(store.getState().scenario.stations[1]?.cell).toEqual([34, 12]);

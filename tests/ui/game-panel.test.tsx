@@ -35,7 +35,14 @@ async function mount(options: { fail?: boolean } = {}): Promise<{ store: EditorS
   return { store, view };
 }
 
-const names = () => screen.getAllByRole('button').concat(screen.getAllByRole('radio'), screen.getAllByRole('slider')).map((el) => el.getAttribute('aria-label') ?? el.textContent ?? '');
+// The same buttons, radios and sliders, sorted into document order (the assertions below are about DOM order; a plain concat
+// listed every button before every radio and slider whatever the DOM order was).
+const names = () =>
+  screen
+    .getAllByRole('button')
+    .concat(screen.getAllByRole('radio'), screen.getAllByRole('slider'))
+    .sort((p, q) => (p.compareDocumentPosition(q) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1))
+    .map((el) => el.getAttribute('aria-label') ?? el.textContent ?? '');
 
 describe('6.1 and 6.2 header and controls', () => {
   it('headed Game view with the replication 0 subtitle and one wrapper with the key help', async () => {

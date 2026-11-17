@@ -9,8 +9,13 @@ import { ScenarioTabs } from './ScenarioTabs';
 import { StationsTable } from './StationsTable';
 import { ImportDialog } from '../import/ImportDialog';
 import { Templates } from '../import/Templates';
+import { FloorPlan } from '../floorplan/FloorPlan';
+import { GameViewPanel } from '../game/GameViewPanel';
+import { ResultTables } from '../results/ResultTables';
+import { RunPanel } from '../run/RunPanel';
+import type { RunController } from '../run/controller';
 
-export function PlanScreen({ store }: { store: EditorStore }): ReactElement {
+export function PlanScreen({ store, controller }: { store: EditorStore; controller: RunController }): ReactElement {
   const state = useEditorState(store);
   const canUndo = (state.past[state.currentIndex]?.length ?? 0) > 0;
   const canRedo = (state.future[state.currentIndex]?.length ?? 0) > 0;
@@ -43,6 +48,15 @@ export function PlanScreen({ store }: { store: EditorStore }): ReactElement {
         <Templates />
       </div>
       <ImportDialog store={store} />
+      <section className="panel" aria-label="Run and results">
+        <RunPanel store={store} controller={controller} />
+        <GameViewPanel store={store} />
+        <ResultTables store={store} />
+      </section>
+      <section className="panel" aria-labelledby="floor-plan-heading">
+        <h2 id="floor-plan-heading">Floor plan</h2>
+        <FloorPlan store={store} />
+      </section>
       <div className="plan-grid">
         <div>
           <section className="panel" aria-label="Arrivals"><ArrivalsTable store={store} /></section>

@@ -25,8 +25,10 @@ Run `npx playwright install chromium` once on a new machine (done on 2026-11-16 
 
 Observed on 2026-11-16 on this PC (Windows, Chrome Headless Shell 156.0.8078.4, default launch flags, no GPU flags):
 `canvas.getContext('webgl2')` and `getContext('webgl')` both return a context, and `navigator.gpu` is absent (no WebGPU).
-That shows a WebGL context exists. Whether PixiJS itself starts on it is not yet observed; task 10.3 records that, and until
-then the canvas cases of tasks 11 and 16 stay unconfirmed. If PixiJS fails to start, those cases record
+That shows a WebGL context exists. Task 10.3 then observed that PixiJS 8.22.0 itself starts on it: an inline `node -e` Playwright command
+(headless Chromium, same browser, same day) loaded pixi.min.js, ran `new Application()` and `await app.init({ preference: 'webgl', autoStart: false })`,
+rendered a circle, and got `renderer.name === 'webgl'`, `resolution` 1 and `ticker.started` false. It left no file behind. This probes PixiJS only,
+not the game view of `src/replay/gameView.ts`, which tasks 11 and 16 exercise. If it fails to start in a later run, the canvas cases record
 `not run (no graphics context in headless Chromium)`, the fallback path of requirement 6.8 is still tested, and nothing runs headed.
 
 ## Test build hook
