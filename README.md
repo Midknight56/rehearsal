@@ -1,8 +1,6 @@
 # Rehearsal
 
-Rehearsal imports an event's arrivals and stations from a workbook, lays them out on a floor plan, and replays a simulated run in a game view so two staffing or layout choices can be compared before the day.
-
-It stitches together a chimera of technologies that do not usually meet: a spreadsheet import, a grid floor plan editor, a discrete event queue simulation and a 2D game engine replay, in one browser app built with Kiro (specs, steering, hooks, a custom agent, the Playwright MCP server and the Kiro CLI).
+Rehearsal is our Frankenstein entry. It stitches together a chimera of technologies into one app: a spreadsheet import, a grid floor plan editor, a discrete event queue simulation and a 2D game engine replay. Bringing these seemingly incompatible elements together builds something unexpectedly powerful: a dress rehearsal for the line at your event's door, where two staffing or layout choices can be compared before the day. Kiro wrote the code through spec driven development, from three specs, in the Kiro CLI.
 
 Category: Frankenstein.
 
@@ -22,6 +20,24 @@ Video: https://youtu.be/uZS-yUdA6-I
 
 
 Results are scenario results under the stated assumptions, not a forecast. The Harbor Hall Community Fair example, its 120 attendees and its service times are fictional and illustrative.
+
+## How Kiro was used
+
+**Kiro IDE, CLI, Web, Crew.** Every code task ran in the Kiro CLI 3.4.0 with model Auto: one written prompt per task, with no person at the keyboard during a run. Each run has a row in `docs/kiro-log.md` (67 rows) with the files touched, the check command, its result and the credit pool before and after. We did not use Kiro Web or Crew, and we did not compare the CLI with the IDE in this build.
+
+**Custom agents.** One custom agent, `.kiro/agents/rehearsal-playwright.json`, made in the Kiro CLI (`kiro-cli agent validate` passed, and `kiro-cli agent list` shows it). It may use only the Playwright MCP server. It opened the dev build, ran the comparison with 13 browser tool calls and read the result back: `Station "Check-in desk": servers 1 → 2`, mean change -297.4 s. That gave a check of the whole journey by Kiro itself, apart from our own browser test suite.
+
+**Agent hooks.** Two hooks. `verify-on-stop` runs `npm run verify` (typecheck, engine tests, build) when the agent stops. `model-tests-on-save` runs the engine tests when a file under `src/simulation/` or `src/spatial/` is saved. The log of the first CLI run shows Kiro reading the hook output and naming its 83 expected failures, so each task started from the real test state.
+
+**Spec driven development.** Three specs, each in three files: `requirements.md`, `design.md` and `tasks.md`. `simulation-contract` is the engine: the scenario type, validation, the event heap, grid paths, keyed random streams and the ten metrics. `scenario-editor-and-replay` is every screen, the import, the floor plan and the game view. `paired-comparison-and-release` is the paired runs, the exports and the release checks. Requirements are numbered user stories with acceptance criteria written as THE SYSTEM SHALL statements (182 in all). Each design ends with its correctness properties. Each task names its files and a Verify command, and a task ends only when that check passes. Kiro reviewed each spec before its tasks ran and applied the findings it agreed with. Against vibe coding: we did not build a vibe coded version to compare. The nearest thing we have is the late visual design work, which ran as plain written prompts outside the specs. Two of those four runs were fix runs for faults we found in screenshots, while the spec tasks carried their checks with them.
+
+**Steering docs.** Five files, all always included. `units-and-determinism.md` fixes the units, the one ordering rule and the random keys, and forbids the wall clock in the engine. `model-limits.md` holds the limit sentences the app must show. `claims-policy.md` says what the product may claim. `accessibility.md` holds the keyboard, focus, motion and contrast rules. `revision-2026-11-16.md` holds the version and naming rules. The rule that made the biggest difference was the wall clock ban: a test scans the engine folders for it, and the same run at 1 times and at 16 times speed gives byte identical results.
+
+**MCP.** The Playwright MCP server (`.kiro/settings/mcp.json`, headless and isolated) let Kiro click through the real build and read the screen back, which a text only run cannot do. The custom agent above used it for the comparison journey.
+
+**Property based testing (PBT).** The specs name 32 correctness properties, and 13 test files check them with fast check. A failing seed is saved and replayed first on every later run. On its first run, property P12 found a case where the design text and the engine disagreed about an idle station; the design sentence was narrowed and the seed stays in the file. We enabled PBT for the engine rules (conservation of guests, queue order, the metric bounds) and for the comparison rules (pairing, summary bounds).
+
+**Kiro powers.** Not used in this build.
 
 ## Commands
 
