@@ -4,7 +4,11 @@
 // when the canvas cannot start. The panel never changes a number and never writes the status region while the clock plays.
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
 import { createGameView, type GameViewHandle, type SamplerOnly } from '../../replay/gameView';
-import { formatMinutesSeconds } from '../../replay/format';
+import { PER_PERSON_OFF, REPLAY_NOTE } from '../../comparison/labels';
+import { attendeePairs, type PopulationChange } from '../../comparison/population';
+import { GHOST_LEGEND, type ReplaySelection } from '../../comparison/replay-contract';
+import type { Scenario } from '../../domain/scenario';
+import { formatMinutesSeconds, formatTimestamp } from '../../replay/format';
 import { timelineOf, type Sample } from '../../replay/sampler';
 import { buildIndex } from '../../replay/traceIndex';
 import { STALE_LABEL, resultsStatus } from '../state/selectors';
@@ -24,15 +28,30 @@ const SPEEDS = [1, 4, 16] as const;
 const TIMES = '\u00d7';
 
 type ViewState = { mode: 'none' } | { mode: 'canvas'; handle: GameViewHandle } | { mode: 'fallback'; sampler: SamplerOnly };
-type Props = { store: EditorStore; createView?: typeof createGameView };
+/** The Compare screen's replay: the candidate layer is the panel's own, the baseline is the ghost (requirement 12.4). */
+export type GhostProps = {
+  selection: ReplaySelection;
+  candidate: Scenario;
+  candidateHash: string;
+  baseline: Scenario;
+  languageMode: 'person-for-person' | 'population';
+  population: PopulationChange;
+};
+type Props = { store: EditorStore; createView?: typeof createGameView; ghost?: GhostProps };
 
 const EMPTY: Sample = { tMs: 0, attendees: [], perStation: {}, arrived: 0, exited: 0 };
 
-export function GameViewPanel({ store, createView = createGameView }: Props): ReactElement {
+export function GameViewPanel({ store, createView = createGameView, ghost }: Props): ReactElement {
   const state = useEditorState(store);
-  const results = state.results[state.currentIndex];
-  const result = results === undefined || results.status === 'none' ? null : results;
-  const stale = resultsStatus(state, state.currentIndex) === 'stale';
+  const stored = state.results[state.currentIndex];
+  const result = useMemo(
+    () =>
+      ghost !== undefined
+        ? ({ status: 'fresh', result: ghost.selection.candidate, snapshot: ghost.candidate, hash: ghost.candidateHash, completedAt: '' } as const)
+        : stored === undefined || stored.status === 'none' ? null : stored,
+    [ghost, stored],
+  );
+  const stale = ghost === undefined && resultsStatus(state, state.currentIndex) === 'stale';
   const reduced = isReducedMotion(state.prefs);
   const helpId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -107,11 +126,18 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
   // Every new result is loaded at clock 0: playing at 1x, or paused under reduced motion. Follow starts off.
   useEffect(() => {
     if (view.mode === 'none' || result === null || result.result.trace === undefined) return;
-    const input = { trace: result.result.trace, layout: result.snapshot.layout, stations: result.snapshot.stations, label: result.snapshot.title };
+    const input = {
+      trace: result.result.trace,
+      layout: result.snapshot.layout,
+      stations: result.snapshot.stations,
+      label: ghost === undefined ? result.snapshot.title : ghost.selection.label,
+      ...(ghost === undefined ? {} : { endMs: ghost.selection.clock.endMs }),
+    };
     setFollowing(null);
     setAttendee(null);
     if (view.mode === 'canvas') {
       view.handle.load(input);
+      if (ghost !== undefined) view.handle.setGhost(ghost.selection.baseline.trace ?? null, ghost.baseline.stations);
       if (reducedRef.current) view.handle.pause();
       else view.handle.play();
       setClock({ ms: 0, playing: !reducedRef.current });
@@ -120,7 +146,7 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
       setClock({ ms: 0, playing: false });
     }
     setLoadedFor(result.result);
-  }, [view, result?.result]);
+  }, [view, result?.result, ghost?.selection]);
 
   // The scrubber also listens to native input and change events: a value set by script and announced with an event (as an
   // assistive tool or a test may do) must move the clock even when React's own change tracking does not see a change.
@@ -153,7 +179,7 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
   const canvas = view.mode === 'canvas' ? view.handle : null;
   const sampler = view.mode === 'canvas' ? view.handle : view.mode === 'fallback' ? view.sampler : null;
   const sample = sampler === null ? EMPTY : sampler.sampleNow();
-  const endMs = index?.endMs ?? 0;
+  const endMs = ghost?.selection.clock.endMs ?? index?.endMs ?? 0;
   const present = sample.arrived - sample.exited;
 
   const togglePlay = (): void => {
@@ -254,6 +280,15 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
 
   const inspected = selectedStation === null ? null : result?.snapshot.stations.find((s) => s.id === selectedStation) ?? null;
   const rows = index === null || attendee === null ? [] : timelineOf(index, attendee, labels);
+  // The baseline's own numbers for the selected attendee, only when both runs admit the same people (12.4).
+  const baselineRow = useMemo(() => {
+    if (ghost === undefined || ghost.languageMode !== 'person-for-person' || attendee === null) return null;
+    const pairs = attendeePairs(ghost.selection, ghost.population);
+    const pair = pairs.ok ? pairs.pairs.find((p) => p.id === attendee) : undefined;
+    if (pair === undefined) return null;
+    const time = (ms: number | null): string => (ms === null ? '\u2014' : formatTimestamp(ms));
+    return `Baseline: waited ${time(pair.baselineWaitMs)} \u00b7 journey ${time(pair.baselineJourneyMs)}`;
+  }, [ghost, attendee]);
 
   const wrapper = (
     <div
@@ -275,11 +310,27 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
         <p className="muted">No replay yet. Activate Simulate to run replication 0 and watch it here.</p>
       ) : (
         <>
-          <p>
-            {stale ? <strong>{STALE_LABEL}</strong> : null}
-            {stale ? ' ' : null}
-            <span>{`Replay of replication ${result.result.replication}, one example run`}</span>
-          </p>
+          {ghost === undefined ? (
+            <p>
+              {stale ? <strong>{STALE_LABEL}</strong> : null}
+              {stale ? ' ' : null}
+              <span>{`Replay of replication ${result.result.replication}, one example run`}</span>
+            </p>
+          ) : (
+            <>
+              <p data-testid="replay-label">{ghost.selection.label}</p>
+              <p data-testid="ghost-legend">{GHOST_LEGEND}</p>
+              <p data-testid="replay-note" className="muted">{REPLAY_NOTE}</p>
+              <ul aria-label="Replay layers" className="layer-legend">
+                <li data-testid="replay-layer-baseline" className="baseline-layer" data-role="baseline" data-replication={ghost.selection.replication}>
+                  {`Baseline, replication ${ghost.selection.replication}`}
+                </li>
+                <li data-testid="replay-layer-candidate" className="candidate-layer" data-role="candidate" data-replication={ghost.selection.replication}>
+                  {`Candidate, replication ${ghost.selection.replication}`}
+                </li>
+              </ul>
+            </>
+          )}
           {result.result.trace === undefined ? <p>This result carries no trace, so there is nothing to replay.</p> : null}
           {view.mode === 'fallback' ? (
             <div role="group" aria-label="Game view could not start">
@@ -304,12 +355,13 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
           {present > SPRITE_CAP ? (
             <p>{`Showing ${SPRITE_CAP.toLocaleString('en-US')} of ${present.toLocaleString('en-US')} attendees as sprites; the others are counted in the badges and every table is complete.`}</p>
           ) : null}
-          <PersonTimeline attendeeId={attendee} rows={rows} onKeyDown={(e) => {
+          <PersonTimeline attendeeId={attendee} rows={rows} baselineRow={baselineRow} onKeyDown={(e) => {
             if (e.key === 'f' || e.key === 'F') {
               e.preventDefault();
               if (attendee !== null) followAttendee(attendee);
             }
           }} />
+          {ghost !== undefined && ghost.languageMode === 'population' && attendee !== null ? <p className="muted">{PER_PERSON_OFF}</p> : null}
           <QueueInspector stationLabel={inspected?.label ?? null} clockMs={clock.ms} sample={inspected === null ? null : (sample.perStation[inspected.id] ?? null)} />
         </>
       )}

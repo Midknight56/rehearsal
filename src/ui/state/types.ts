@@ -1,6 +1,8 @@
 // Editor state and actions (task 5). Task 1 writes the types so that the tests compile; task 5 adds the behaviour.
 // The compare slice and the compare/* actions are added by task 18. workspace/load, screen/set, the idle message,
 // import/apply.imported and run/result.completedAt were added by task 5 (landing, run panel and import announcements need them).
+import type { Comparison } from '../../comparison/comparison';
+import type { ComparisonSummary } from '../../comparison/summary';
 import type { Scenario } from '../../domain/scenario';
 import type { RunResult } from '../../simulation/simulate';
 import type { ImportPreview } from '../../imports/preview';
@@ -25,6 +27,19 @@ export type RunState =
 
 export type TabKey = string;
 
+/** The Compare screen (requirement 12). `comparison` is the live record; `restored` a saved summary read back (12.6). */
+export type CompareState = {
+  baselineKey: TabKey | null;
+  candidateKey: TabKey | null;
+  running: boolean;
+  progress: { done: number; total: number } | null;
+  loadingReplication: number | null;
+  comparison: Comparison | null;
+  restored: ComparisonSummary | null;
+  /** The verbatim message of the last cancelled or failed outcome; cleared by the next start or completion. */
+  message: string | null;
+};
+
 export type EditorState = {
   stateVersion: 1;
   screen: 'landing' | 'plan' | 'compare' | 'print';
@@ -41,6 +56,7 @@ export type EditorState = {
   results: ResultsState[];
   run: RunState;
   replay: { follow: string | null; selectedAttendee: string | null; inspectedStation: string | null; speed: 1 | 4 | 16; playing: boolean; clockMs: number };
+  compare: CompareState;
   importDialog: { open: boolean; preview: ImportPreview | null; busy: boolean; message: string | null };
   storage: { saved: SavedScenarioSummary[]; message: string | null; unreadable: boolean; saveError: { reason: 'quota' | 'unavailable' | 'limit' } | null };
   prefs: Prefs;
@@ -86,5 +102,15 @@ export type EditorAction =
   | { type: 'hash/computed'; tabIndex: number; revision: number; hash: string }
   | { type: 'storage/save-failed'; reason: 'quota' | 'unavailable' | 'limit' }
   | { type: 'storage/save-ok' }
+  | { type: 'storage/listed'; saved: SavedScenarioSummary[]; unreadable: boolean }
+  | { type: 'compare/pick'; side: 'baseline' | 'candidate'; key: TabKey }
+  | { type: 'compare/started' }
+  | { type: 'compare/progress'; done: number; total: number }
+  | { type: 'compare/complete'; comparison: Comparison }
+  | { type: 'compare/ended'; message: string }
+  | { type: 'compare/loading'; replication: number }
+  | { type: 'compare/replicate'; comparison: Comparison }
+  | { type: 'compare/replicate-failed'; message: string }
+  | { type: 'compare/restore'; summary: ComparisonSummary }
   | { type: 'status/set'; text: string }
   | { type: 'prefs/set'; prefs: Prefs };

@@ -1,9 +1,11 @@
 import { expect, type Page } from '@playwright/test';
-import { assertFocusVisibleAndUnobscured, readStatus, tabTo } from './helpers';
+import { COMPLETE_TEXT } from '../../src/comparison/labels';
+import { assertFocusVisibleAndUnobscured, backTabTo, readHash, readStatus, tabTo } from './helpers';
 
 /**
  * 9.3 (matrix row 20): the journey with keyboard input only. Files are chosen through the input element, which is the
- * only way to hand a file to headless Chromium. The Compare, Export JSON and re-import steps are added by task 19.
+ * only way to hand a file to headless Chromium. After the replay it compares (a baseline and a candidate picked by keyboard),
+ * returns to the plan, exports the scenario as JSON and opens that file again (9.3, task 19).
  */
 export async function keyboardJourney(page: Page): Promise<void> {
   await page.goto('/');
@@ -57,4 +59,37 @@ export async function keyboardJourney(page: Page): Promise<void> {
   await expect(page.getByRole('button', { name: 'Follow' })).toHaveAttribute('aria-pressed', 'true');
   await page.keyboard.press('Escape');
   expect(await readStatus(page)).toBe('Follow released.');
+
+  // 9.3 (task 19): Compare, back to the plan, Export JSON, then open that file through Open JSON.
+  const title = ((await page.getByRole('heading', { level: 1 }).textContent()) ?? '').trim();
+  const hash = await readHash(page);
+  await backTabTo(page, 'Compare', { checkFocus: true });
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { level: 1, name: 'Compare scenarios' })).toBeFocused();
+  await tabTo(page, `Baseline: ${title}`, { checkFocus: true });
+  await page.keyboard.press('Enter');
+  await tabTo(page, 'Candidate: Harbor Hall Community Fair: extra check-in staff', { checkFocus: true });
+  await page.keyboard.press('Enter');
+  await tabTo(page, 'Run comparison', { checkFocus: true });
+  await page.keyboard.press('Enter');
+  await expect(page.getByTestId('compare-status')).toHaveText(COMPLETE_TEXT, { timeout: 90_000 });
+  await backTabTo(page, 'Back to plan', { checkFocus: true });
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { level: 1, name: title })).toBeFocused();
+
+  await tabTo(page, 'Export JSON', { checkFocus: true });
+  const [download] = await Promise.all([page.waitForEvent('download'), page.keyboard.press('Enter')]);
+  const name = /^[a-z0-9-]+-([0-9a-f]{8})\.json$/.exec(download.suggestedFilename());
+  expect(name?.[1]).toBe(hash.slice(0, 8));
+  await page.getByTestId('import-json').setInputFiles(await download.path());
+  await expect(page.getByRole('button', { name: 'Open', exact: true })).toBeFocused();
+  await page.keyboard.press('Enter');
+  expect(await readStatus(page)).toBe(`Opened "${title}".`);
+  await expect.poll(async () => {
+    try {
+      return await readHash(page);
+    } catch {
+      return '';
+    }
+  }).toBe(hash);
 }

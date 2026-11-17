@@ -43,6 +43,7 @@ export function initialState(input: { scenarios: Scenario[]; tabKeys: TabKey[]; 
     results: scenarios.map((): ResultsState => ({ status: 'none' })),
     run: { status: 'idle' },
     replay: { follow: null, selectedAttendee: null, inspectedStation: null, speed: 1, playing: false, clockMs: 0 },
+    compare: { baselineKey: null, candidateKey: null, running: false, progress: null, loadingReplication: null, comparison: null, restored: null, message: null },
     importDialog: { open: false, preview: null, busy: false, message: null },
     storage: { saved: [], message: null, unreadable: false, saveError: null },
     prefs: input.prefs ?? { version: 1, motion: 'system' },
@@ -230,6 +231,18 @@ function freshId(prefix: string, taken: string[]): string {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Compare picks: the current tab is the candidate and the first other tab the baseline, unless the picks already name open tabs.
+
+function withDefaultPicks(state: EditorState): EditorState['compare'] {
+  const open = (key: TabKey | null): key is TabKey => key !== null && state.tabKeys.includes(key);
+  const { baselineKey, candidateKey } = state.compare;
+  if (open(baselineKey) && open(candidateKey)) return state.compare;
+  const current = state.tabKeys[state.currentIndex] as TabKey;
+  const other = state.tabKeys.find((key) => key !== current) ?? current;
+  return { ...state.compare, baselineKey: open(baselineKey) ? baselineKey : other, candidateKey: open(candidateKey) ? candidateKey : current };
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Committing
 
 function setTab<T>(list: T[], index: number, value: T): T[] {
@@ -373,7 +386,25 @@ export function reduce(state: EditorState, action: EditorAction): EditorState {
     case 'import/preview':
       return { ...state, importDialog: { ...state.importDialog, preview: action.preview, busy: false } };
     case 'screen/set':
-      return { ...state, screen: action.screen };
+      return { ...state, screen: action.screen, ...(action.screen === 'compare' ? { compare: withDefaultPicks(state) } : {}) };
+    case 'compare/pick':
+      return { ...state, compare: action.side === 'baseline' ? { ...state.compare, baselineKey: action.key } : { ...state.compare, candidateKey: action.key } };
+    case 'compare/started':
+      return { ...state, compare: { ...state.compare, running: true, progress: { done: 0, total: 0 }, loadingReplication: null, message: null } };
+    case 'compare/progress':
+      return state.compare.running ? { ...state, compare: { ...state.compare, progress: { done: action.done, total: action.total } } } : state;
+    case 'compare/complete':
+      return { ...state, compare: { ...state.compare, running: false, progress: null, loadingReplication: null, comparison: action.comparison, restored: null, message: null } };
+    case 'compare/ended':
+      return { ...state, compare: { ...state.compare, running: false, progress: null, loadingReplication: null, message: action.message } };
+    case 'compare/loading':
+      return state.compare.comparison === null ? state : { ...state, compare: { ...state.compare, loadingReplication: action.replication, message: null } };
+    case 'compare/replicate':
+      return { ...state, compare: { ...state.compare, loadingReplication: null, comparison: action.comparison, message: null } };
+    case 'compare/replicate-failed':
+      return { ...state, compare: { ...state.compare, loadingReplication: null, message: action.message } };
+    case 'compare/restore':
+      return { ...state, compare: { ...state.compare, running: false, progress: null, loadingReplication: null, comparison: null, restored: action.summary, message: null } };
     case 'scenario/select-tab': {
       if (action.index === state.currentIndex || action.index < 0 || action.index >= state.scenarios.length) return state;
       return {
@@ -424,6 +455,8 @@ export function reduce(state: EditorState, action: EditorAction): EditorState {
     }
     case 'storage/save-failed':
       return { ...state, storage: { ...state.storage, saveError: { reason: action.reason } } };
+    case 'storage/listed':
+      return { ...state, storage: { ...state.storage, saved: action.saved, unreadable: action.unreadable } };
     case 'storage/save-ok':
       return { ...state, storage: { ...state.storage, saveError: null } };
     case 'prefs/set':

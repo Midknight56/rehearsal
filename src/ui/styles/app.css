@@ -334,3 +334,40 @@ input[type="range"] {
   min-width: 10em;
   max-width: 100%;
 }
+/* Compare screen (requirement 12): metric cards in a grid that wraps, so no horizontal page scroll at 1,024 x 640. */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+
+.metric-card h4,
+.metric-card p {
+  margin: 4px 0;
+}
+
+.layer-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 4px 0;
+  padding: 0;
+}
+
+.layer-legend li {
+  padding: 2px 8px;
+}
+
+.compare .population {
+  border: 2px solid var(--ink);
+  font-weight: bold;
+  padding: 4px;
+}

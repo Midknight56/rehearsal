@@ -11,6 +11,7 @@
     "test:model": "vitest run --passWithNoTests",
     "test:ui": "vitest run --config vitest.ui.config.ts --passWithNoTests",
     "test:e2e": "playwright test",
+    "test:video": "playwright test --config playwright.video.config.ts",
     "build": "vite build",
     "verify": "npm run typecheck && npm run test:model && npm run test:ui && npm run build"
   },

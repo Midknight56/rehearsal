@@ -15,9 +15,15 @@ import { ResultTables } from '../results/ResultTables';
 import { RunPanel } from '../run/RunPanel';
 import type { RunController } from '../run/controller';
 import { createPrefsStore, type Prefs } from '../../storage/prefs';
+import { requestHeadingFocus, useHeadingFocus } from '../focus';
+import { OpenJson } from '../import/OpenJson';
+import type { SavedScenarios } from '../saved';
+import { SaveBar } from '../SaveBar';
+import { SaveError } from '../SaveError';
 
-export function PlanScreen({ store, controller }: { store: EditorStore; controller: RunController }): ReactElement {
+export function PlanScreen({ store, controller, saved }: { store: EditorStore; controller: RunController; saved?: SavedScenarios }): ReactElement {
   const state = useEditorState(store);
+  useHeadingFocus();
   const canUndo = (state.past[state.currentIndex]?.length ?? 0) > 0;
   const canRedo = (state.future[state.currentIndex]?.length ?? 0) > 0;
 
@@ -57,6 +63,9 @@ export function PlanScreen({ store, controller }: { store: EditorStore; controll
         {canRedo ? null : <span className="muted">Nothing to redo.</span>}
         <button type="button" onClick={() => store.dispatch({ type: 'import/open' })}>Import</button>
         <Templates />
+        <button type="button" onClick={() => { requestHeadingFocus(); store.dispatch({ type: 'screen/set', screen: 'compare' }); }}>Compare</button>
+        <OpenJson store={store} label="Open JSON" />
+        {saved === undefined ? null : <SaveBar store={store} saved={saved} />}
         <label>
           Motion{' '}
           <select value={state.prefs.motion} onChange={(e) => setMotion(e.target.value as Prefs['motion'])}>
@@ -66,6 +75,7 @@ export function PlanScreen({ store, controller }: { store: EditorStore; controll
           </select>
         </label>
       </div>
+      {saved === undefined ? null : <SaveError store={store} onRetry={() => void saved.save()} />}
       <ImportDialog store={store} />
       <div className="plan-grid">
         <div>

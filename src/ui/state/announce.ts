@@ -1,5 +1,6 @@
 // Text for the one status region, derived from an action and the states around it. The store writes it through setStatus;
 // it is never produced per frame (requirement 9.2).
+import { COMPLETE_TEXT, replayLabel, restoredSummaryText } from '../../comparison/labels';
 import { refusal } from './reducer';
 import type { EditorAction, EditorState } from './types';
 
@@ -37,6 +38,15 @@ export function announcement(prev: EditorState, action: EditorAction, next: Edit
     }
     case 'run/cancelling':
       return null;
+    case 'compare/complete':
+      return COMPLETE_TEXT;
+    case 'compare/ended':
+    case 'compare/replicate-failed':
+      return action.message;
+    case 'compare/replicate':
+      return `${replayLabel(action.comparison.replay.replication)} loaded.`;
+    case 'compare/restore':
+      return restoredSummaryText(action.summary.createdAt);
     default:
       return null;
   }

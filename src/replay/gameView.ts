@@ -18,9 +18,10 @@ import { badgeLines } from './badges';
 import { createCamera, type Camera } from './camera';
 import { createReplayCore, type Hit, type LoadInput, type ReplayCore } from './core';
 import { failed } from './fallback';
+import { ghostKey, lookOf, splitLayers } from './ghost';
 import { createPool, type Pool } from './pool';
 import { queueColour, queueSlot } from './queueLine';
-import { sampleAt, visibleSet, type AttendeeSample, type Sample } from './sampler';
+import { sampleAt, type AttendeeSample, type Sample } from './sampler';
 
 export type { Hit } from './core';
 
@@ -39,7 +40,7 @@ export interface GameViewHandle {
   seek(ms: number): void;
   follow(attendeeId: string | null): void;
   select(target: Hit | null): void;
-  setGhost(trace: Trace | null): void;
+  setGhost(trace: Trace | null, stations?: Scenario['stations']): void;
   onHit(cb: (hit: Hit) => void): () => void;
   onClock(cb: (ms: number, playing: boolean) => void): () => void;
   onFollowEnd(cb: (id: string, exitedAtMs: number) => void): () => void;
@@ -59,6 +60,8 @@ const VIEW_HEIGHT = 420;
 const MAX_FRAME_MS = 250;
 
 const COLOUR = { floor: 0x151f33, line: 0x2b3a57, ink: 0xeef2f8, blocked: 0x3b4a68, candidate: 0x22d3ee, board: 0x0b1220, focus: 0xfde047 } as const;
+const GHOST_LOOK = lookOf('baseline');
+const CANDIDATE_LOOK = lookOf('candidate');
 
 let forced = false;
 /** Test hook (task 11): makes the next createGameView report `forced`, as `?renderer=off` does in the test build. */
@@ -136,6 +139,8 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   let builtFor: LoadInput | null = null;
   let stationLabels = new Map<string, Text>();
   let badgeTexts = new Map<string, Text>();
+  let ghostBadgeTexts = new Map<string, Text>();
+  const look = new Map<Graphics, 'candidate' | 'baseline'>();
   let gateLabels: Text[] = [];
   let spritesDrawn = 0;
   let aggregatedAttendees = 0;
@@ -149,10 +154,33 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     return t;
   };
 
+  /** The candidate layer is solid and cyan; the baseline ghost is translucent, hatched and dashed-outlined, orange. */
+  function paint(g: Graphics, role: 'candidate' | 'baseline'): void {
+    if (look.get(g) === role) return;
+    g.clear();
+    if (role === 'candidate') {
+      g.circle(0, 0, 6).fill({ color: CANDIDATE_LOOK.colour, alpha: CANDIDATE_LOOK.alpha }).stroke({ width: 1.5, color: COLOUR.board });
+    } else {
+      g.circle(0, 0, 6).fill({ color: GHOST_LOOK.colour, alpha: GHOST_LOOK.alpha });
+      for (const y of [-3, 0, 3]) {
+        const half = Math.sqrt(36 - y * y);
+        g.moveTo(-half, y).lineTo(half, y);
+      }
+      g.stroke({ width: 1, color: GHOST_LOOK.colour, alpha: 0.9 });
+      for (let i = 0; i < 8; i += 1) {
+        const a0 = (i * Math.PI) / 4;
+        g.moveTo(6 * Math.cos(a0), 6 * Math.sin(a0)).arc(0, 0, 6, a0, a0 + Math.PI / 8);
+      }
+      g.stroke({ width: 1.5, color: GHOST_LOOK.colour });
+    }
+    look.set(g, role);
+  }
+
   function ensurePool(): void {
     if (pool !== null) return;
     pool = createPool<Graphics>(SPRITE_CAP, () => {
-      const g = new PIXI.Graphics().circle(0, 0, 6).fill({ color: COLOUR.candidate }).stroke({ width: 1.5, color: COLOUR.board });
+      const g = new PIXI.Graphics();
+      paint(g, 'candidate');
       g.visible = false;
       layers.people.addChild(g);
       sprites.push(g);
@@ -173,14 +201,15 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     for (const g of sprites) g.visible = false;
     spritesDrawn = 0;
     aggregatedAttendees = 0;
-    for (const t of [...stationLabels.values(), ...badgeTexts.values(), ...gateLabels]) t.destroy();
+    for (const t of [...stationLabels.values(), ...badgeTexts.values(), ...ghostBadgeTexts.values(), ...gateLabels]) t.destroy();
     stationLabels = new Map(input.stations.map((s) => [s.id, makeText(s.label, 11)]));
     badgeTexts = new Map([...input.stations.map((s) => s.id), 'entrance'].map((id) => [id, makeText('', 11)]));
+    ghostBadgeTexts = new Map([...input.stations.map((s) => s.id), 'entrance'].map((id) => [id, makeText('', 11)]));
     gateLabels = [makeText('In', 10), makeText('Out', 10)];
     layers.labels.removeChildren();
     layers.badges.removeChildren();
     for (const t of [...stationLabels.values(), ...gateLabels]) layers.labels.addChild(t);
-    for (const t of badgeTexts.values()) layers.badges.addChild(t);
+    for (const t of [...badgeTexts.values(), ...ghostBadgeTexts.values()]) layers.badges.addChild(t);
     fitCamera(input);
     builtFor = input;
   }
@@ -227,9 +256,9 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     }
   }
 
-  function spritePosition(input: LoadInput, a: AttendeeSample): [number, number] {
+  function spritePosition(stations: Scenario['stations'], a: AttendeeSample): [number, number] {
     if (a.phase === 'waiting' && a.stationId !== undefined && a.queueIndex !== undefined) {
-      const station = input.stations.find((s) => s.id === a.stationId);
+      const station = stations.find((s) => s.id === a.stationId);
       if (station !== undefined) {
         const slot = queueSlot(station.cell, a.queueIndex);
         return [slot[0] + 0.5, slot[1] + 0.5];
@@ -251,13 +280,14 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     if (builtFor !== input) buildScene(input);
     const clock = state.clock;
     const sample = sampleAt(state.index, clock.ms);
-    const cap = state.ghost === null ? SPRITE_CAP : SPRITE_CAP_WITH_GHOST;
-    const { drawn, aggregated } = visibleSet(sample, cap);
+    const ghostSample = state.ghost === null ? null : sampleAt(state.ghost, clock.ms);
+    const split = splitLayers(sample, ghostSample, state.ghost === null ? SPRITE_CAP : SPRITE_CAP_WITH_GHOST);
+    const { drawn, aggregated } = split.candidate;
 
     if (state.follow !== null) {
       const followed = sample.attendees.find((a) => a.id === state.follow);
       if (followed !== undefined) {
-        const [fx, fy] = spritePosition(input, followed);
+        const [fx, fy] = spritePosition(input.stations, followed);
         camera.centerOn([fx, fy]);
       }
     }
@@ -279,14 +309,29 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     }
 
     // People: the drawn ids take pooled slots; everything else is hidden.
-    const slots = (pool as Pool<Graphics>).sync(drawn.map((a) => a.id));
+    // One pool of 1,000 slots serves both layers (at most 500 + 500 with a ghost), so the sprite budget never rises.
+    const ghostDrawn = split.baseline.drawn;
+    const slots = (pool as Pool<Graphics>).sync([...drawn.map((a) => a.id), ...ghostDrawn.map((a) => ghostKey(a.id))]);
     for (const g of sprites) g.visible = false;
     screenOf.clear();
     const radius = Math.max(0.25, (cellScreen * 0.3) / 6);
+    // The baseline is translucent and dashed-outlined, so an overlap with a candidate sprite stays readable.
+    const ghostStations = state.ghostStations ?? input.stations;
+    for (const a of ghostDrawn) {
+      const g = slots.get(ghostKey(a.id));
+      if (g === undefined) continue;
+      paint(g, 'baseline');
+      const [px, py] = spritePosition(ghostStations, a);
+      const [sx, sy] = screen(px, py);
+      g.position.set(sx, sy);
+      g.scale.set(radius);
+      g.visible = true;
+    }
     for (const a of drawn) {
       const g = slots.get(a.id);
       if (g === undefined) continue;
-      const [px, py] = spritePosition(input, a);
+      paint(g, 'candidate');
+      const [px, py] = spritePosition(input.stations, a);
       const [sx, sy] = screen(px, py);
       g.position.set(sx, sy);
       g.scale.set(radius);
@@ -297,18 +342,22 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
 
     // Badges for the attendees beyond the cap.
     aggregatedAttendees = aggregated.reduce((n, g) => n + g.waiting + g.inService + g.walking, 0);
-    for (const t of badgeTexts.values()) t.visible = false;
-    for (const badge of badgeLines(aggregated)) {
-      const t = badgeTexts.get(badge.stationId);
-      if (t === undefined) continue;
-      const cell = badge.stationId === 'entrance' ? input.layout.entrance : input.stations.find((s) => s.id === badge.stationId)?.cell;
-      if (cell === undefined) continue;
-      const text = badge.lines.join('  ');
-      if (t.text !== text) t.text = text;
-      const [sx, sy] = screen(cell[0], cell[1] + 1);
-      t.position.set(sx, sy + 2);
-      t.visible = true;
-    }
+    for (const t of [...badgeTexts.values(), ...ghostBadgeTexts.values()]) t.visible = false;
+    const placeBadges = (lines: typeof aggregated, texts: Map<string, Text>, stations: Scenario['stations'], prefix: string, drop: number): void => {
+      for (const badge of badgeLines(lines)) {
+        const t = texts.get(badge.stationId);
+        if (t === undefined) continue;
+        const cell = badge.stationId === 'entrance' ? input.layout.entrance : stations.find((s) => s.id === badge.stationId)?.cell;
+        if (cell === undefined) continue;
+        const text = prefix + badge.lines.join('  ');
+        if (t.text !== text) t.text = text;
+        const [sx, sy] = screen(cell[0], cell[1] + 1);
+        t.position.set(sx, sy + 2 + drop);
+        t.visible = true;
+      }
+    };
+    placeBadges(aggregated, badgeTexts, input.stations, '', 0);
+    placeBadges(split.baseline.aggregated, ghostBadgeTexts, ghostStations, 'Baseline ', 13);
 
     // Rings for the selected attendee or station and for the followed attendee.
     const o = layers.overlay;
@@ -413,7 +462,7 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
       if (core.state().follow !== null) camera.setZoom(Math.max(camera.zoom, 2));
     },
     select: (t) => core.select(t),
-    setGhost: (trace) => core.setGhost(trace),
+    setGhost: (trace, stations) => core.setGhost(trace, stations),
     onHit: (cb) => core.onHit(cb),
     onClock: (cb) => core.onClock(cb),
     onFollowEnd: (cb) => core.onFollowEnd(cb),

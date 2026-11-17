@@ -127,6 +127,7 @@ export function makeState(
     results: scenarios.map(() => ({ status: 'none' as const })),
     run: { status: 'idle' },
     replay: { follow: null, selectedAttendee: null, inspectedStation: null, speed: 1, playing: false, clockMs: 0 },
+    compare: { baselineKey: null, candidateKey: null, running: false, progress: null, loadingReplication: null, comparison: null, restored: null, message: null },
     importDialog: { open: false, preview: null, busy: false, message: null },
     storage: { saved: [], message: null, unreadable: false, saveError: null },
     prefs: { version: 1, motion: 'system' },

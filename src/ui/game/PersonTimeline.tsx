@@ -3,7 +3,7 @@
 import type { KeyboardEvent, ReactElement } from 'react';
 import type { TimelineRow } from '../../replay/sampler';
 
-export function PersonTimeline(props: { attendeeId: string | null; rows: TimelineRow[]; onKeyDown?: (e: KeyboardEvent<HTMLTableElement>) => void }): ReactElement {
+export function PersonTimeline(props: { attendeeId: string | null; rows: TimelineRow[]; baselineRow?: string | null; onKeyDown?: (e: KeyboardEvent<HTMLTableElement>) => void }): ReactElement {
   if (props.attendeeId === null) {
     return <p className="muted">Choose an attendee in Find attendee, or click a sprite, to read the timeline.</p>;
   }
@@ -24,6 +24,11 @@ export function PersonTimeline(props: { attendeeId: string | null; rows: Timelin
               <td>{row.detail}</td>
             </tr>
           ))}
+          {props.baselineRow === undefined || props.baselineRow === null ? null : (
+            <tr data-testid="baseline-row">
+              <td colSpan={2}>{props.baselineRow}</td>
+            </tr>
+          )}
         </tbody>
       </table>
     </div>

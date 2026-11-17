@@ -56,6 +56,23 @@ export async function tabTo(page: Page, name: string | RegExp, options: { checkF
   throw new Error(`tabTo: no focusable element named ${String(name)} after 300 Tab presses`);
 }
 
+/** Shift+Tab until the focused element has the accessible name (a control earlier in the page); fails after 300 presses. */
+export async function backTabTo(page: Page, name: string | RegExp, options: { checkFocus?: boolean } = {}): Promise<void> {
+  for (let i = 0; i < 300; i++) {
+    await page.keyboard.press('Shift+Tab');
+    if (options.checkFocus === true) await assertFocusVisibleAndUnobscured(page);
+    const text = await page.evaluate(() => {
+      const el = document.activeElement;
+      if (el === null || el === document.body) return '';
+      const labelledBy = el.getAttribute('aria-labelledby');
+      const labelled = labelledBy === null ? '' : labelledBy.split(' ').map((id) => document.getElementById(id)?.textContent ?? '').join(' ');
+      return ((el.getAttribute('aria-label') ?? labelled) || (el as HTMLInputElement).labels?.[0]?.textContent || el.textContent || '').trim();
+    });
+    if (typeof name === 'string' ? text === name : name.test(text)) return;
+  }
+  throw new Error(`backTabTo: no focusable element named ${String(name)} after 300 Shift+Tab presses`);
+}
+
 /** After a Tab: the focused element has an outline-style other than none and is the topmost element at its centre. */
 export async function assertFocusVisibleAndUnobscured(page: Page): Promise<void> {
   const result = await page.evaluate(() => {

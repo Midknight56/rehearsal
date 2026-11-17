@@ -1,10 +1,11 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { FORBIDDEN_BADGE_WORDS } from '../../src/exports/assumptions-text';
 
 // Words that must not appear as whole words in the source string literals of src/ui/print/** and src/ui/results/**
-// (model-limits.md; FORBIDDEN_BADGE_WORDS of the comparison spec once task 19 imports it).
-const WORDS = ['optimized', 'optimised', 'optimal', 'safe', 'certified', 'recommended'];
+// (model-limits.md). The one list of the repository is FORBIDDEN_BADGE_WORDS of src/exports/assumptions-text.ts.
+const WORDS = FORBIDDEN_BADGE_WORDS;
 const FOLDERS = ['src/ui/print', 'src/ui/results'];
 
 function files(dir: string): string[] {
@@ -24,6 +25,10 @@ function literals(source: string): string[] {
 }
 
 describe('8.2 vocabulary of the printed and result surfaces', () => {
+  it('uses the one list of badge words, which holds exactly the six words of the steering file', () => {
+    expect([...FORBIDDEN_BADGE_WORDS]).toEqual(['optimized', 'optimised', 'optimal', 'safe', 'certified', 'recommended']);
+  });
+
   it('scans the result tables', () => {
     expect(files('src/ui/results').length).toBeGreaterThan(0);
   });

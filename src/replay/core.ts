@@ -22,7 +22,8 @@ export type ReplayCore = {
   seek(ms: number): void;
   follow(attendeeId: string | null): void;
   select(target: Hit | null): void;
-  setGhost(trace: Trace | null): void;
+  /** The baseline ghost; `stations` are the baseline's own (they differ from the candidate's when a station moved). */
+  setGhost(trace: Trace | null, stations?: Scenario['stations']): void;
   onHit(cb: (hit: Hit) => void): () => void;
   onClock(cb: (ms: number, playing: boolean) => void): () => void;
   onFollowEnd(cb: (id: string, exitedAtMs: number) => void): () => void;
@@ -36,6 +37,7 @@ export type ReplayCore = {
     input: LoadInput | null;
     index: TraceIndex | null;
     ghost: TraceIndex | null;
+    ghostStations: Scenario['stations'] | null;
     clock: ClockState;
     follow: string | null;
     selected: Hit | null;
@@ -62,6 +64,7 @@ export function createReplayCore(options: { autoplay: boolean }): ReplayCore {
   let input: LoadInput | null = null;
   let index: TraceIndex | null = null;
   let ghost: TraceIndex | null = null;
+  let ghostStations: Scenario['stations'] | null = null;
   let clock: ClockState = { ms: 0, playing: false, speed: 1, endMs: 0 };
   let following: string | null = null;
   let selected: Hit | null = null;
@@ -97,6 +100,8 @@ export function createReplayCore(options: { autoplay: boolean }): ReplayCore {
     load(next) {
       input = next;
       index = buildIndex(next.trace, next.stations);
+      ghost = null;
+      ghostStations = null;
       clock = { ms: 0, playing: options.autoplay, speed: clock.speed, endMs: next.endMs ?? index.endMs };
       if (clock.endMs <= 0) clock = { ...clock, playing: false };
       following = null;
@@ -138,8 +143,9 @@ export function createReplayCore(options: { autoplay: boolean }): ReplayCore {
       selected = target;
       changeListeners.call();
     },
-    setGhost(trace) {
-      ghost = trace === null || input === null ? null : buildIndex(trace, input.stations);
+    setGhost(trace, stations) {
+      ghostStations = trace === null || input === null ? null : (stations ?? input.stations);
+      ghost = trace === null || ghostStations === null ? null : buildIndex(trace, ghostStations);
       changeListeners.call();
     },
     onHit: hitListeners.add,
@@ -155,7 +161,7 @@ export function createReplayCore(options: { autoplay: boolean }): ReplayCore {
     },
     emitHit: (hit) => hitListeners.call(hit),
     onChange: changeListeners.add,
-    state: () => ({ input, index, ghost, clock, follow: following, selected }),
+    state: () => ({ input, index, ghost, ghostStations, clock, follow: following, selected }),
   };
   return core;
 }

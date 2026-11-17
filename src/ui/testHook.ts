@@ -1,12 +1,15 @@
 // window.__rehearsal, installed only in the test build (VITE_REHEARSAL_TEST === '1'). The production build never loads this
-// module. storage.failNextWrite is added by task 19.
+// module. storage.failNextWrite arrived with task 19.
 import { validateScenario } from '../domain/validate';
 import { forceRendererFailure } from '../replay/gameView';
+import { failNextWrite } from '../storage/browser';
 import type { GameViewHandle } from '../replay/gameView';
 import { registeredView, requestRestart } from './game/viewRegistry';
 import type { EditorStore } from './state/store';
 
 export type RehearsalHook = {
+  /** Test build only: the next write to the scenario or comparison store throws an error with this name. */
+  storage: { failNextWrite(name: string): void };
   /** Replace the current tab's scenario with the scenario in this JSON text (one committed edit). */
   loadScenario(json: string): void;
   /** The game view handle of the page (its `debug()` reports `unavailable` when the canvas could not start). */
@@ -25,6 +28,7 @@ declare global {
 
 export function installTestHook(store: EditorStore): void {
   window.__rehearsal = {
+    storage: { failNextWrite },
     loadScenario(json) {
       const result = validateScenario(JSON.parse(json));
       if (!result.ok) throw new Error(result.issues[0]?.message ?? 'Scenario is invalid.');
