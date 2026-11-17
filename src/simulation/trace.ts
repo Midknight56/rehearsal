@@ -1,9 +1,6 @@
 import type { PathCache, CachedPath } from '../spatial/path-cache';
 import type { NodeRef } from './heap';
 import type { ScheduleOutput } from './scheduler';
-function notImplemented(name: string): never {
-  throw new Error(`not implemented: ${name}`);
-}
 export type TraceEvent =
   | { kind: 'arrive'; timeMs: number; attendeeId: string }
   | { kind: 'depart'; timeMs: number; attendeeId: string; from: NodeRef; to: NodeRef; pathId: number; arriveMs: number }
@@ -16,6 +13,19 @@ export type MovementSegment = { attendeeId: string; startMs: number; endMs: numb
 export type TraceAttendee = { id: string; cohortId: string; arrivalMs: number; exitMs: number | null };
 export type Trace = { version: 1; paths: CachedPath[]; attendees: TraceAttendee[]; events: TraceEvent[]; segments: MovementSegment[] };
 
+const byArrivalThenId = (a: TraceAttendee, b: TraceAttendee): number =>
+  a.arrivalMs !== b.arrivalMs ? a.arrivalMs - b.arrivalMs : a.id < b.id ? -1 : a.id > b.id ? 1 : 0;
+
+/** Assemble the trace of one run: referenced paths in id order, attendees by (arrivalMs, id), events in processing order. */
 export function buildTrace(out: ScheduleOutput, cache: PathCache): Trace {
-  return notImplemented('buildTrace');
+  const referenced = new Set(out.segments.map((segment) => segment.pathId));
+  return {
+    version: 1,
+    paths: cache.paths.filter((path) => referenced.has(path.id)).sort((a, b) => a.id - b.id),
+    attendees: out.attendees
+      .map((record): TraceAttendee => ({ id: record.id, cohortId: record.cohortId, arrivalMs: record.arrivalMs, exitMs: record.exitMs }))
+      .sort(byArrivalThenId),
+    events: out.events,
+    segments: out.segments,
+  };
 }

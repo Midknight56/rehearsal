@@ -53,3 +53,11 @@ describe('row 5.4: Harbor Hall walking values (hand-calculated)', () => {
     expect(cache.key).not.toBe(createPathCache(baseline).key);
   });
 });
+
+describe('path cache key', () => {
+  it('is equal when blockedCells are given in a different order', () => {
+    const forward = { ...baseline, layout: { ...baseline.layout, blockedCells: [[3, 3], [1, 2], [1, 1], [5, 0]] as [number, number][] } };
+    const shuffled = { ...baseline, layout: { ...baseline.layout, blockedCells: [[5, 0], [1, 1], [3, 3], [1, 2]] as [number, number][] } };
+    expect(createPathCache(shuffled).key).toBe(createPathCache(forward).key);
+  });
+});

@@ -13,7 +13,7 @@ export type Scenario = {
   layout: Layout; walkSpeedMps: number; stations: Station[]; cohorts: Cohort[]; notes: string;
 };
 
-// Structural check only; limits live in validate.ts. Numbers are accepted when 	ypeof is number (so NaN and
+// Structural check only; limits live in validate.ts. Numbers are accepted when typeof is number (so NaN and
 // Infinity reach validation, which reports them as NON_FINITE); strings that carry meaning (arrivals, service kind)
 // are checked by validation with their own codes.
 const num = z.custom<number>((value) => typeof value === 'number');

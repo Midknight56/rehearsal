@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "property": "P12 dash rule",
+    "seed": -1813227410,
+    "path": "8:19:0:1:1:1:1:1:1:1:1:1:1:1:1",
+    "counterexample": "[{\"schemaVersion\":1,\"id\":\"property\",\"revision\":0,\"title\":\"property scenario\",\"modelVersion\":\"0.1.0\",\"baseSeed\":\"0\",\"horizonMs\":321472,\"layout\":{\"cols\":2,\"rows\":3,\"cellSizeM\":0.5,\"blockedCells\":[],\"entrance\":[0,0],\"exit\":[0,0]},\"walkSpeedMps\":0.5,\"stations\":[{\"id\":\"s0\",\"label\":\"Station 0\",\"cell\":[0,0],\"servers\":1,\"service\":{\"kind\":\"triangular\",\"minS\":1,\"modeS\":1,\"maxS\":2}}],\"cohorts\":[],\"notes\":\"\"},0]",
+    "date": "2026-11-17"
+  }
+]

@@ -19,9 +19,8 @@ function sortKeys(value: unknown): unknown {
 const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
- * Canonical JSON of every field except the top-level id, evision, 	itle and 
-otes (station and cohort
- * ids stay): keys sorted at every level, stations and cohorts by id, lockedCells by x then y.
+ * Canonical JSON of every field except the top-level id, revision, title and notes (station and cohort
+ * ids stay): keys sorted at every level, stations and cohorts by id, blockedCells by x then y.
  */
 export function canonicalJson(scenario: Scenario): string {
   const { id: _id, revision: _revision, title: _title, notes: _notes, ...rest } = scenario;

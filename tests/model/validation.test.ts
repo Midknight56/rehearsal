@@ -3,6 +3,7 @@ import type { Scenario } from '../../src/domain/scenario';
 import { validateScenario, type IssueCode } from '../../src/domain/validate';
 import { MODEL_VERSION } from '../../src/simulation/version';
 import { scenario } from './helpers/build-scenario';
+import { shorterRoute } from './fixtures/harbor-hall';
 
 /** A valid 5 × 3 scenario: entrance (0,0), exit (4,0), one station "desk" at (2,1), cohort "c" of 5 attendees. */
 function base(): Scenario {
@@ -99,5 +100,17 @@ describe('rows 1.3 to 1.8: one exact message per code', () => {
     const result = validateScenario(input);
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.warnings.map((warning) => warning.code)).toEqual(['MODEL_VERSION_MISMATCH']);
+  });
+});
+
+describe('UNREACHABLE on Harbor Hall', () => {
+  it('names both stations when packs is walled off', () => {
+    const walls: [number, number][] = [[14, 7], [15, 8], [14, 9], [13, 8]];
+    const input = { ...shorterRoute, layout: { ...shorterRoute.layout, blockedCells: [...shorterRoute.layout.blockedCells, ...walls] } };
+    const result = validateScenario(input);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.issues.map((issue) => issue.message)).toContain('No walkable path between station "checkin" (10,12) and station "packs" (14,8).');
+    }
   });
 });

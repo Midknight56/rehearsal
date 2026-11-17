@@ -6,7 +6,7 @@ import { compileAttendees } from './arrivals';
 import { computeMetrics, type Metrics } from './metrics';
 import { compileServiceSampler } from './sampling';
 import { runSchedule } from './scheduler';
-import type { Trace } from './trace';
+import { buildTrace, type Trace } from './trace';
 
 export type SimulateOptions = { trace: boolean; scenarioHash: string };
 export type RunResult = {
@@ -56,5 +56,6 @@ export function simulate(scenario: Scenario, replication: number, options: Simul
     completion: out.completion,
     unfinished: out.unfinished,
     metrics: computeMetrics(out, s, cache),
+    ...(options.trace ? { trace: buildTrace(out, cache) } : {}),
   };
 }
