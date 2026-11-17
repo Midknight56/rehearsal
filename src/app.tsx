@@ -60,6 +60,7 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
 
   return (
     <>
+      <StatusRegion store={store} />
       {screen === 'landing' ? (
         <Landing store={store} saved={saved} {...(props.fetchImpl === undefined ? {} : { fetchImpl: props.fetchImpl })} />
       ) : screen === 'compare' ? (
@@ -67,7 +68,6 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
       ) : (
         <PlanScreen store={store} controller={controller} saved={saved} />
       )}
-      <StatusRegion store={store} />
     </>
   );
 }

@@ -34,15 +34,15 @@ export function ArrivalsTable({ store }: { store: EditorStore }): ReactElement {
         <tbody>
           {scenario.cohorts.map((c) => (
             <tr key={c.id} aria-selected={state.selection.kind === 'cohort' && state.selection.id === c.id ? true : undefined}>
-              <td><CommitInput label={`cohort_id of ${c.id}`} value={c.id} onCommit={(t) => attempt(store, { type: 'cohort/rename', id: c.id, newId: t.trim() })} /></td>
-              <td><CommitInput label={`start_min of ${c.id}`} value={minutes(c.startMs)} inputMode="decimal" width="5em" onCommit={minuteField(c, 'startMs', 'start_min')} /></td>
-              <td><CommitInput label={`end_min of ${c.id}`} value={minutes(c.endMs)} inputMode="decimal" width="5em" onCommit={minuteField(c, 'endMs', 'end_min')} /></td>
+              <td><CommitInput label={`cohort_id of ${c.id}`} size="id" value={c.id} onCommit={(t) => attempt(store, { type: 'cohort/rename', id: c.id, newId: t.trim() })} /></td>
+              <td><CommitInput label={`start_min of ${c.id}`} value={minutes(c.startMs)} inputMode="decimal" width="4em" onCommit={minuteField(c, 'startMs', 'start_min')} /></td>
+              <td><CommitInput label={`end_min of ${c.id}`} value={minutes(c.endMs)} inputMode="decimal" width="4em" onCommit={minuteField(c, 'endMs', 'end_min')} /></td>
               <td>
                 <CommitInput
                   label={`count of ${c.id}`}
                   value={String(c.count)}
                   inputMode="numeric"
-                  width="5em"
+                  width="4em"
                   onCommit={(t) => {
                     const p = parseWhole(t);
                     return p.ok ? attempt(store, { type: 'cohort/set', id: c.id, patch: { count: p.value } }) : `must be a whole number of 0 or more (got "${t.trim()}")`;
@@ -62,13 +62,16 @@ export function ArrivalsTable({ store }: { store: EditorStore }): ReactElement {
               <td>
                 <CommitInput
                   label={`route of ${c.id}`}
+                  size="wide"
                   value={c.route.join('|')}
                   onCommit={(t) => attempt(store, { type: 'cohort/set', id: c.id, patch: { route: t.split('|').map((x) => x.trim()).filter((x) => x !== '') } })}
                 />
               </td>
               <td>
-                <button type="button" aria-label={`Select ${c.id}`} onClick={() => store.dispatch({ type: 'select', selection: { kind: 'cohort', id: c.id } })}>Select</button>{' '}
+                <div className="cell-actions">
+                <button type="button" aria-label={`Select ${c.id}`} onClick={() => store.dispatch({ type: 'select', selection: { kind: 'cohort', id: c.id } })}>Select</button>
                 <button type="button" aria-label={`Delete cohort ${c.id}`} onClick={() => attempt(store, { type: 'cohort/delete', id: c.id })}>Delete</button>
+                </div>
               </td>
             </tr>
           ))}

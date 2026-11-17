@@ -106,7 +106,7 @@ input[aria-invalid="true"] {
 
 .plan-grid {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  grid-template-columns: minmax(0, 11fr) minmax(0, 9fr);
   gap: 12px;
   align-items: start;
 }
@@ -140,7 +140,21 @@ td {
 
 td input {
   width: 100%;
-  min-width: 3.5em;
+  min-width: 3em;
+}
+
+td input.wide {
+  min-width: 9em;
+}
+
+td input.id {
+  min-width: 5.5em;
+}
+
+.cell-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .toolbar {
@@ -184,18 +198,12 @@ td input {
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
 
-/* The sticky status bar must not cover a focused control: focus scrolling leaves room for it. */
-html {
-  scroll-padding-bottom: 4rem;
-}
-
+/* The status region sits in the page flow above the screens, so it never covers a control. */
 #status {
-  position: sticky;
-  bottom: 0;
   padding: 6px 16px;
   background: var(--card);
-  border-top: 1px solid var(--line);
-  min-height: 2em;
+  border-bottom: 1px solid var(--line);
+  min-height: 2.4em;
 }
 
 @media (max-width: 700px) {
@@ -206,7 +214,7 @@ html {
 /* Floor plan: the SVG sits in a focusable, scrollable wrapper; markers carry a number and a label, never colour alone. */
 .floorplan-wrapper {
   overflow: auto;
-  max-height: 60vh;
+  max-height: 85vh;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--board);

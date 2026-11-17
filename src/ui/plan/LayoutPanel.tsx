@@ -1,8 +1,9 @@
 // Layout panel: the keyboard and form equivalent of every floor plan action that is not a station move (requirement 3.7).
-import { useState, type ReactElement } from 'react';
+import { useMemo, useState, type ReactElement } from 'react';
 import { parseWhole } from '../../imports/numbers';
 import type { EditorStore } from '../state/store';
 import { useEditorState } from '../state/useEditorState';
+import { groupBlockedCells, rectLabel } from './blockedRects';
 import { CommitInput, PairInput, attempt } from './fields';
 
 const cellParse = (text: string): number | null => {
@@ -16,6 +17,7 @@ export function LayoutPanel({ store }: { store: EditorStore }): ReactElement {
   const { layout } = scenario;
   const [x, setX] = useState('');
   const [y, setY] = useState('');
+  const rects = useMemo(() => groupBlockedCells(layout.blockedCells), [layout.blockedCells]);
   const [addError, setAddError] = useState<string | null>(null);
 
   const resize = (axis: 'cols' | 'rows') => (text: string): string | null => {
@@ -54,12 +56,15 @@ export function LayoutPanel({ store }: { store: EditorStore }): ReactElement {
       </p>
       <h3>Blocked cells</h3>
       <ul aria-label="Blocked cells">
-        {layout.blockedCells.map((b) => (
-          <li key={`${b[0]},${b[1]}`}>
-            {`(${b[0]}, ${b[1]})`}{' '}
-            <button type="button" aria-label={`Remove (${b[0]}, ${b[1]})`} onClick={() => attempt(store, { type: 'layout/toggle-blocked', cell: [b[0], b[1]] })}>Remove</button>
-          </li>
-        ))}
+        {rects.map((r) => {
+          const label = rectLabel(r);
+          return (
+            <li key={`${r.x0},${r.y0},${r.x1},${r.y1}`}>
+              {label}{' '}
+              <button type="button" aria-label={`Remove ${label.replace(/, \d+ cells?$/, '')}`} onClick={() => attempt(store, r.cells.length === 1 ? { type: 'layout/toggle-blocked', cell: r.cells[0] as [number, number] } : { type: 'layout/unblock-cells', cells: r.cells })}>Remove</button>
+            </li>
+          );
+        })}
       </ul>
       <p>
         <input aria-label="Blocked cell x" inputMode="numeric" value={x} style={{ width: '4em' }} onChange={(e) => setX(e.target.value)} />{' '}

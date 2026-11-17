@@ -205,7 +205,7 @@ export function commits(action: EditorAction): boolean {
   switch (action.type) {
     case 'station/move': case 'station/set': case 'station/rename': case 'station/add': case 'station/delete':
     case 'cohort/set': case 'cohort/rename': case 'cohort/add': case 'cohort/delete':
-    case 'layout/toggle-blocked': case 'layout/set-entrance': case 'layout/set-exit': case 'layout/resize':
+    case 'layout/toggle-blocked': case 'layout/unblock-cells': case 'layout/set-entrance': case 'layout/set-exit': case 'layout/resize':
     case 'layout/unblock-and-place-entrance': case 'layout/unblock-and-place-exit':
     case 'settings/set': case 'import/apply': case 'scenario/open': case 'drag/end':
       return true;
@@ -347,6 +347,11 @@ export function reduce(state: EditorState, action: EditorAction): EditorState {
         ? s.layout.blockedCells.filter((b) => !(b[0] === action.cell[0] && b[1] === action.cell[1]))
         : [...s.layout.blockedCells, action.cell];
       return commit(state, { ...s, layout: { ...s.layout, blockedCells } });
+    }
+    case 'layout/unblock-cells': {
+      const gone = new Set(action.cells.map((c) => `${c[0]},${c[1]}`));
+      const blockedCells = s.layout.blockedCells.filter((b) => !gone.has(`${b[0]},${b[1]}`));
+      return blockedCells.length === s.layout.blockedCells.length ? state : commit(state, { ...s, layout: { ...s.layout, blockedCells } });
     }
     case 'layout/set-entrance':
       return commit(state, { ...s, layout: { ...s.layout, entrance: action.cell } });

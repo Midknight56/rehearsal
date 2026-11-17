@@ -30,6 +30,8 @@ export type GameViewDebug = {
   tickerRunning: boolean; resolution: number; clockMs: number; playing: boolean; speed: number; follow: string | null;
   spritesDrawn: number; spritesPooled: number; aggregatedAttendees: number; ghostLoaded: boolean; framesLast2s: number;
   rendererStatus: 'ready' | 'unavailable' | 'destroyed';
+  /** Test aid: canvas-relative CSS px of the entrance, the exit and the stations; see buildHandle. */
+  projection?: Record<string, unknown> | null;
 };
 export interface GameViewHandle {
   load(input: { trace: Trace; layout: Scenario['layout']; stations: Scenario['stations']; label: string; endMs?: number }): void;
@@ -143,6 +145,7 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   const look = new Map<Graphics, 'candidate' | 'baseline'>();
   let gateLabels: Text[] = [];
   let spritesDrawn = 0;
+  let wasFollowing = false;
   let aggregatedAttendees = 0;
   const screenOf = new Map<string, [number, number]>();
   const frames: number[] = [];
@@ -284,6 +287,9 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     const split = splitLayers(sample, ghostSample, state.ghost === null ? SPRITE_CAP : SPRITE_CAP_WITH_GHOST);
     const { drawn, aggregated } = split.candidate;
 
+    // The camera moves only while Follow is on; when it ends (released, or the attendee exited) the whole floor is fitted again.
+    if (state.follow === null && wasFollowing) fitCamera(input);
+    wasFollowing = state.follow !== null;
     if (state.follow !== null) {
       const followed = sample.attendees.find((a) => a.id === state.follow);
       if (followed !== undefined) {
@@ -446,6 +452,19 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   };
   canvas.addEventListener('pointerdown', onPointerDown);
 
+  /** Test aid: the canvas size and the canvas position in CSS px of the centre of the entrance, the exit and every station cell. */
+  const projection = (input: LoadInput | null): Record<string, unknown> | null => {
+    if (input === null) return null;
+    const at = (cell: readonly number[]): [number, number] => screen((cell[0] as number) + 0.5, (cell[1] as number) + 0.5);
+    return {
+      canvas: { width, height: VIEW_HEIGHT },
+      cellPx: CELL_PX * camera.zoom,
+      entrance: at(input.layout.entrance),
+      exit: at(input.layout.exit),
+      stations: Object.fromEntries(input.stations.map((s) => [s.id, at(s.cell)])),
+    };
+  };
+
   const guard = (): void => {
     if (destroyed) throw new Error('Game view destroyed');
   };
@@ -459,7 +478,16 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     seek: (ms) => core.seek(ms),
     follow(id) {
       core.follow(id);
-      if (core.state().follow !== null) camera.setZoom(Math.max(camera.zoom, 2));
+      const input = core.state().input;
+      if (core.state().follow !== null) {
+        camera.setZoom(Math.max(camera.zoom, 2));
+        wasFollowing = true;
+      } else if (input !== null) {
+        // Released: the whole floor again, even when no frame was drawn while Follow was on.
+        fitCamera(input);
+        wasFollowing = false;
+        syncTicker();
+      }
     },
     select: (t) => core.select(t),
     setGhost: (trace, stations) => core.setGhost(trace, stations),
@@ -485,6 +513,7 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
         ghostLoaded: state.ghost !== null,
         framesLast2s: frames.length,
         rendererStatus: 'ready',
+        projection: projection(state.input),
       };
     },
     destroy() {

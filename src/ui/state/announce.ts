@@ -22,6 +22,10 @@ export function announcement(prev: EditorState, action: EditorAction, next: Edit
       const imported = action.imported ?? { cohorts: action.candidate.cohorts.length, stations: action.candidate.stations.length };
       return `Imported ${imported.cohorts} cohorts and ${imported.stations} stations from ${action.sources.join(', ')}.`;
     }
+    case 'layout/unblock-cells': {
+      const n = prev.scenario.layout.blockedCells.length - next.scenario.layout.blockedCells.length;
+      return n <= 0 ? null : `Removed ${n} blocked ${n === 1 ? 'cell' : 'cells'}.`;
+    }
     case 'run/blocked':
       return action.message;
     case 'run/finished': {

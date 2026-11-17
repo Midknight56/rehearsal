@@ -18,6 +18,8 @@ export function CommitInput(props: {
   onCommit: (text: string) => string | null;
   inputMode?: 'text' | 'decimal' | 'numeric';
   width?: string;
+  /** wide keeps room for a typical label or route, id for a short identifier. */
+  size?: 'id' | 'wide';
 }): ReactElement {
   const [draft, setDraft] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,7 @@ export function CommitInput(props: {
         type="text"
         inputMode={props.inputMode ?? 'text'}
         aria-label={props.label}
+        className={props.size}
         value={draft ?? props.value}
         aria-invalid={error === null ? undefined : true}
         aria-describedby={error === null ? undefined : errorId}
@@ -113,8 +116,8 @@ export function PairInput(props: {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) commit();
       }}
     >
-      <input {...common} aria-label={props.labelX} value={x ?? String(props.value[0])} style={{ width: '4em' }} onChange={(e) => setX(e.target.value)} />
-      <input {...common} aria-label={props.labelY} value={y ?? String(props.value[1])} style={{ width: '4em' }} onChange={(e) => setY(e.target.value)} />
+      <input {...common} aria-label={props.labelX} value={x ?? String(props.value[0])} style={{ width: '3.2em' }} onChange={(e) => setX(e.target.value)} />
+      <input {...common} aria-label={props.labelY} value={y ?? String(props.value[1])} style={{ width: '3.2em' }} onChange={(e) => setY(e.target.value)} />
       {error === null ? null : <span id={errorId} className="field-error">{error}</span>}
     </span>
   );

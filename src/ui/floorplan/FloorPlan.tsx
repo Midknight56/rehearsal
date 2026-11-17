@@ -8,6 +8,9 @@ import { useStationDrag } from './drag';
 import { CELL_UNITS, MAX_ZOOM, MIN_ZOOM, ZOOM_STEP, cellCentre, cellOrigin, clampZoom, fitZoom, scrollAfterZoom } from './grid';
 import { routeSegments } from './routes';
 
+/** Fit may use this share of the window height (the wrapper's max-height in app.css), so a wide grid fills the width. */
+const FIT_HEIGHT_SHARE = 0.85;
+
 export const FLOOR_PLAN_KEY_HELP =
   'Arrow keys move the selected station or the cell cursor, Space toggles a blocked cell, E sets the entrance, X sets the exit, Escape clears the selection, Tab leaves the floor plan.';
 
@@ -35,6 +38,14 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
     }
     setZoom(target);
   };
+
+  // The grid starts fitted to the wrapper, so every station is on the map and nothing is hidden at the right edge.
+  useLayoutEffect(() => {
+    const el = wrapperRef.current;
+    if (el !== null) setZoom(fitZoom(layout.cols, layout.rows, el.clientWidth, window.innerHeight * FIT_HEIGHT_SHARE));
+    // Only on mount: later size changes are the Fit button's job.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useLayoutEffect(() => {
     const el = wrapperRef.current;
@@ -127,7 +138,7 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
           type="button"
           onClick={() => {
             const el = wrapperRef.current;
-            changeZoom(el === null ? 1 : fitZoom(layout.cols, layout.rows, el.clientWidth, el.clientHeight));
+            changeZoom(el === null ? 1 : fitZoom(layout.cols, layout.rows, el.clientWidth, window.innerHeight * FIT_HEIGHT_SHARE));
           }}
         >
           Fit

@@ -44,23 +44,23 @@ export function StationsTable({ store }: { store: EditorStore }): ReactElement {
             const [min, mode, max] = triple(s);
             return (
               <tr key={s.id} aria-selected={state.selection.kind === 'station' && state.selection.id === s.id ? true : undefined}>
-                <td><CommitInput label={`station_id of ${s.id}`} value={s.id} onCommit={(t) => attempt(store, { type: 'station/rename', id: s.id, newId: t.trim() })} /></td>
-                <td><CommitInput label={`label of ${s.id}`} value={s.label} onCommit={(t) => attempt(store, { type: 'station/set', id: s.id, patch: { label: t } })} /></td>
+                <td><CommitInput label={`station_id of ${s.id}`} size="id" value={s.id} onCommit={(t) => attempt(store, { type: 'station/rename', id: s.id, newId: t.trim() })} /></td>
+                <td><CommitInput label={`label of ${s.id}`} size="wide" value={s.label} onCommit={(t) => attempt(store, { type: 'station/set', id: s.id, patch: { label: t } })} /></td>
                 <td>
                   <CommitInput
                     label={`servers of ${s.id}`}
                     value={String(s.servers)}
                     inputMode="numeric"
-                    width="4em"
+                    width="3em"
                     onCommit={(t) => {
                       const p = parseWhole(t);
                       return p.ok ? attempt(store, { type: 'station/set', id: s.id, patch: { servers: p.value } }) : `must be a whole number from ${LIMITS.minServers} to ${LIMITS.maxServers} (got "${t.trim()}")`;
                     }}
                   />
                 </td>
-                <td><CommitInput label={`service_min_s of ${s.id}`} value={String(min)} inputMode="decimal" width="5em" onCommit={service(s, 0)} /></td>
-                <td><CommitInput label={`service_mode_s of ${s.id}`} value={String(mode)} inputMode="decimal" width="5em" onCommit={service(s, 1)} /></td>
-                <td><CommitInput label={`service_max_s of ${s.id}`} value={String(max)} inputMode="decimal" width="5em" onCommit={service(s, 2)} /></td>
+                <td><CommitInput label={`service_min_s of ${s.id}`} value={String(min)} inputMode="decimal" width="4em" onCommit={service(s, 0)} /></td>
+                <td><CommitInput label={`service_mode_s of ${s.id}`} value={String(mode)} inputMode="decimal" width="4em" onCommit={service(s, 1)} /></td>
+                <td><CommitInput label={`service_max_s of ${s.id}`} value={String(max)} inputMode="decimal" width="4em" onCommit={service(s, 2)} /></td>
                 <td>
                   <PairInput
                     labelX={`cell_x of ${s.id}`}

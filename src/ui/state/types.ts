@@ -74,6 +74,7 @@ export type EditorAction =
   | { type: 'cohort/add' }
   | { type: 'cohort/delete'; id: string }
   | { type: 'layout/toggle-blocked'; cell: [number, number] }
+  | { type: 'layout/unblock-cells'; cells: [number, number][] }
   | { type: 'layout/set-entrance'; cell: [number, number] }
   | { type: 'layout/set-exit'; cell: [number, number] }
   | { type: 'layout/unblock-and-place-entrance'; cell: [number, number] }
