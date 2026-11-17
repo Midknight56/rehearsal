@@ -7,7 +7,7 @@ import { COMPLETE_TEXT } from '../../src/comparison/labels';
 const BASE_URL = process.env.BASE_URL;
 test.skip(BASE_URL === undefined || BASE_URL === '', 'BASE_URL not set');
 
-const FETCH_TYPES = new Set(['document', 'script', 'stylesheet', 'image', 'fetch', 'other']);
+const FETCH_TYPES = new Set(['document', 'script', 'stylesheet', 'image', 'font', 'fetch', 'other']);
 
 test('judge access: no login, the three tabs, a complete comparison and same-origin requests only', async ({ browser }) => {
   const base = new URL(BASE_URL as string);

@@ -54,7 +54,7 @@ The model has no abandonment, staff breaks, scheduled staffing changes, weather,
 
 ## Privacy
 
-On 2026-11-17 a headless Chromium run (Playwright 1.64.1, this Windows PC) opened the deployed build at https://rehearsal.midknight-ent-llc.workers.dev with no stored site data and no login, clicked `Try the community fair`, ran the baseline against the extra check-in desk for 30 paired runs, and recorded every request the page made. All 21 were GET requests to that same address: the page, its scripts and style sheet, the simulation worker script and the three example scenario files. None went to another address and none sent a request body. The simulation ran in the browser, on that page's own worker. The list is in `docs/acceptance/2026-11-17-release.md`.
+On 2026-11-17 a headless Chromium run (Playwright 1.64.1, this Windows PC) opened the deployed build at https://rehearsal.midknight-ent-llc.workers.dev with no stored site data and no login, clicked `Try the community fair`, ran the baseline against the extra check-in desk for 30 paired runs, and recorded every request the page made. All 28 were GET requests to that same address: the page, its scripts and style sheet, its seven bundled font files, the simulation worker script and the three example scenario files. None went to another address and none sent a request body. The simulation ran in the browser, on that page's own worker. The list is in `docs/acceptance/2026-11-17-release.md`.
 
 What this does not cover: the inspection did not import a workbook or export a file on the deployed address. The site is a static host, which still receives ordinary page requests for its own files. This is one run on one browser, not an audit.
 

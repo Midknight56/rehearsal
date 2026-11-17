@@ -42,3 +42,7 @@ The owner made a new look for the app: a blackboard, chalk lines and guests draw
 - The model, the trace, the metrics, `MODEL_VERSION` and `expected.json` did not change.
 
 State at this entry: both runs done, verify green (281 model, 454 UI), browser tests being rerun after a run where the preview server stopped early. Before and after stills of Plan, Game view, Compare and Run sheet at 1920 by 1080 and 360 by 640 go to the lead for the owner. The film and gallery wait for the owner's yes on those stills.
+
+## Release check sees bundled fonts (17 Nov, evening)
+
+The blackboard design bundles its fonts, so the deployed page now also loads seven woff2 files from its own `/assets/` folder. The release network check only allowed the request types document, script, stylesheet, image, fetch and other, so it failed on type "font" while every request still went to the same address by GET. I added "font" to that list in `tests/e2e/judge-access.spec.ts` by hand (one word, not a Kiro run) and kept the same address and GET checks. The rerun on the live site passed with 28 requests, and the README privacy paragraph now gives that count.
