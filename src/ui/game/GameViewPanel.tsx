@@ -270,7 +270,7 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
 
   return (
     <section className="panel game-view" aria-labelledby={`${helpId}-heading`} onKeyDown={onPanelKey} data-testid="game-view-panel">
-      {ready ? <h2 id={`${helpId}-heading`}>Game view</h2> : null}
+      {ready ? <h2 id={`${helpId}-heading`} aria-label="Game view">Game view{result === null ? null : <span className="muted">{` \u00b7 scenario hash ${result.hash.slice(0, 8)}`}</span>}</h2> : null}
       {result === null ? (
         <p className="muted">No replay yet. Activate Simulate to run replication 0 and watch it here.</p>
       ) : (

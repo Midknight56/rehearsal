@@ -53,6 +53,12 @@ describe('6.1 and 6.2 header and controls', () => {
     expect(document.getElementById(wrapper.getAttribute('aria-describedby') as string)?.textContent).toBe(GAME_HELP);
   });
 
+  it('puts the first 8 characters of the scenario hash in the heading, the same value as the assumptions panel', async () => {
+    const { store } = await mount();
+    const hash = store.getState().hashes[0] as string;
+    expect(screen.getByRole('heading', { name: 'Game view' }).textContent).toContain(hash.slice(0, 8));
+  });
+
   it('puts Play, Speed, Step back, Step forward, the scrubber and the readout in this DOM order', async () => {
     await mount();
     const order = ['Play', 'Pause', '1×', '4×', '16×', 'Step back', 'Step forward', 'Simulated time'];

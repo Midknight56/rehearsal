@@ -104,6 +104,12 @@ describe('3.8 route labels', () => {
     for (const text of ['5 m · 4.2 s', '12 m · 10.0 s', '21 m · 17.5 s']) expect(screen.getByText(text)).toBeTruthy();
   });
 
+  it('labels the route of the first cohort when no cohort is selected', () => {
+    const store = makeStore();
+    renderWith(store, (s) => <FloorPlan store={s} />);
+    for (const text of ['5 m \u00b7 4.2 s', '12 m \u00b7 10.0 s', '21 m \u00b7 17.5 s']) expect(screen.getByText(text)).toBeTruthy();
+  });
+
   it('draws a pair with no path as a dashed line labelled no path', () => {
     const { baseline } = harborHall();
     const ring = JSON.parse(readFileSync('tests/imports/fixtures/layout-ring-30-4.json', 'utf8'));

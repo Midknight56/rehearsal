@@ -114,7 +114,7 @@ Every task ends with its `Verify:` line passing and one `docs/kiro-log.md` row t
   - _Requirements: 3.7, 8.2, 9.1, 9.3, 9.4, 9.5, 9.7, 9.8_
   - _Owner: kiro_
 
-- [ ] 14. Checkpoint for matrix rows 13–22
+- [x] 14. Checkpoint for matrix rows 13–22
   - Run `npm run verify` and `npm run test:e2e` on the branch; both pass (the browser specs of tasks 15, 18 and 19 do not exist yet). Confirm by reading that `src/replay/clock.ts` and `src/replay/camera.ts` import nothing from `src/simulation/**` or `src/workers/**`, that `tests/ui/replay-boundary.test.ts` passes, and that the sheet-isolation case of `tests/imports/xlsx.test.ts` passes.
   - Save headless screenshots from the Playwright runs under `docs/acceptance/img/`: the drag of `packs`, the blocked-route message, the sprite-cap banner and the reduced-motion control order; write the first part of `docs/acceptance/scenario-editor-and-replay.md` as Kiro's own record (not an independent review): one line per matrix row 13–22 with the test file, the pass or fail line the runner printed, or `not run` with the reason.
   - Verify: `npm run verify` and `npm run test:e2e` exit 0; `(Select-String -Path docs/acceptance/scenario-editor-and-replay.md -Pattern '^- Row (1[3-9]|2[0-2])').Count` prints 10; the four screenshots exist (`Test-Path`).
@@ -129,14 +129,14 @@ Every task ends with its `Verify:` line passing and one `docs/kiro-log.md` row t
   - _Requirements: 2.8, 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 10.5, 12.2, 12.7_
   - _Owner: kiro_
 
-- [ ] 16. The xlsx → simulation → replay round trip and the labels
+- [x] 16. The xlsx → simulation → replay round trip and the labels
   - Fill the replay half of `tests/e2e/round-trip.spec.ts` (8.5): open the fair, import `harbor-hall.xlsx` into the baseline, simulate, open the timeline of `doors#0000`; assert the imported cells and servers, one `Scenario hash` value in the assumptions panel and the game view header, the floor plan labels `5 m · 4.2 s`, `12 m · 10.0 s`, `21 m · 17.5 s`, and the timeline rows `Walked to Check-in desk (00:04.167)`; repeat on the shorter-route tab (`4 m · 3.3 s`, `9 m · 7.5 s`). The print half is task 15's; without it the round trip ends at the replay.
   - Save a headless screenshot of the `Game view` header with `Replay of replication 0, one example run`, `Follow` pressed, and the landing pitch line under `docs/acceptance/img/` (`labels.png`).
   - Verify: `npx playwright test tests/e2e/round-trip.spec.ts` passes; `Test-Path docs/acceptance/img/labels.png` prints `True`; `npm run verify` passes.
   - _Requirements: 6.1, 7.1, 7.4, 8.5, 10.1_
   - _Owner: kiro_
 
-- [ ] 17. Record the evidence of tasks 1–14 and 16
+- [x] 17. Record the evidence of tasks 1–14 and 16
   - Check that every task 1–14 and 16 (10.1, 10.2 and 10.3 separately) has its `docs/kiro-log.md` row, and append this task's row with the *verify* ledger: items settled with their observed values (SheetJS source, version and cell fields; the Vite test-build flag; the Playwright API names; headless graphics; the Vitest per-file environment) and items still open.
   - Add the round-trip line and the labels screenshot to `docs/acceptance/scenario-editor-and-replay.md`; confirm the landing sentence is still `Everything runs in this browser.` (the longer sentence waits for matrix row 21 on the deployed URL).
   - Verify: `(Select-String -Path docs/kiro-log.md -Pattern 'scenario-editor-and-replay, task').Count` is at least 18; `npm run verify` and `npm run test:e2e` exit 0; `(Select-String -Path .kiro/specs/scenario-editor-and-replay/requirements.md, .kiro/specs/scenario-editor-and-replay/design.md -Pattern '\*verify\*').Count` equals the open-items count of the ledger.

@@ -112,7 +112,9 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
     }
   }
 
-  const segments = selection.kind === 'cohort' ? routeSegments(scenario, selection.id) : [];
+  // Until a cohort is selected the route of the first cohort is drawn, so the walking labels are always on the map (3.8).
+  const routeCohort = selection.kind === 'cohort' ? selection.id : scenario.cohorts[0]?.id;
+  const segments = routeCohort === undefined ? [] : routeSegments(scenario, routeCohort);
   const entrance = cellOrigin(layout.entrance);
   const exit = cellOrigin(layout.exit);
 
