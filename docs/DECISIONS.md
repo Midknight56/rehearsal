@@ -15,3 +15,7 @@ Picks made while building without the owner. Each line says what was picked and 
 | 2026-11-17 | Task 11, renderer-fallback Retry test: after Retry, seek the replay clock to 60,000 ms (past the first arrival at 12,208 ms) and then poll until `spritesDrawn` > 0. The assertion stays. | The test read sprites at about 115 ms, before anyone has arrived; Kiro found no product defect. The test's intent is "Retry draws the trace". |
 | 2026-11-17 | Task 13, shared keyboard journey: make the first Space step reduced-motion aware. With reduced motion the results load paused (requirement 9.4), so Space starts playback and the check expects `Pause`; a second Space returns to `Play`. Without reduced motion the journey is unchanged. | Requirement 9.4 is right; the journey was written for normal motion only. Both states are still checked. |
 | 2026-11-17 | scenario-editor-and-replay: do task 16 before finishing task 14, then 14, then 17. | Task 14's checkpoint runs the whole e2e suite, which already holds task 16's round-trip tests. Doing 16 first lets 14 check everything with no test skipped. |
+
+## Licence (17 Nov, 9:05 AM)
+
+Pick: MIT, holder Adrian Ferguson (he enters as himself). Why: the rules ask for an open source licence file; MIT is OSI approved, short, and fits every dependency (SheetJS is Apache-2.0). `package.json` gets `"license": "MIT"`. Not picked: Apache-2.0 (longer, adds a NOTICE duty; no gain here).
