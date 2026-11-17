@@ -1,0 +1,12 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "model-tests-on-save",
+      "trigger": "PostFileSave",
+      "matcher": "^src/(simulation|spatial)/",
+      "action": { "type": "command", "command": "npm run test:model" },
+      "timeout": 300
+    }
+  ]
+}

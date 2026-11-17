@@ -1,0 +1,6 @@
+# Kiro log
+
+Copy this file to `docs/kiro-log.md` in the Rehearsal repository (only if that file does not exist yet) and delete the three rows marked EXAMPLE before the first real entry. One row per completed task, appended the same day by the agent that did the task. Rows for fleet work name the fleet agent and its worktree (`../Rehearsal-<module>`), never Kiro; Kiro's reviews of `scenario-editor-and-replay` tasks are labelled `review`, not implementation; hook observations (`Setup: hook observation`), the MCP availability check (`Setup: MCP registration`), one-line requests to another owner (`request to <owner>: <change>`) and gate evidence rows are rows too. Commits from Kiro sessions carry the trailer `Kiro-Task: <spec>/<task number>`, so a row's commit can be checked against history. The builder checks the Credits column against the Kiro usage display at the Wednesday and Saturday ledger updates. Write `none` when nothing failed; never invent a failure, a measurement or a result. Every row has seven cells. The submission write-up, the blog post and the repository README's Kiro section are assembled from this table.
+
+| Date | Surface / model | Task (spec, task number) | Files or commit | Verify command and result | Credits | What changed because of a failure |
+| --- | --- | --- | --- | --- | --- | --- |
