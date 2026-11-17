@@ -21,6 +21,7 @@ import { CAMERA_EASE_MS, GLIDE_MS, PULSE_MS, ghostSizePx, pulseScale } from './e
 import { createGlide } from './glide';
 import { createReplayCore, type Hit, type LoadInput, type ReplayCore } from './core';
 import { failed } from './fallback';
+import { placeLabels, type LabelRequest } from './labelPlacement';
 import { ghostKey, lookOf, splitLayers } from './ghost';
 import { createPool, type Pool } from './pool';
 import { queueColour, queueSlot } from './queueLine';
@@ -90,6 +91,8 @@ const STROKE_PX = 2.5;
 const PATH_DOT_PX = 2;
 const PATH_DOT_GAP_PX = 7;
 const MAX_PATH_LABELS = 24;
+/** Floor label size in canvas CSS px: at least 11 on the wide canvas and 10 on the phone canvas (these are one larger). */
+const labelPxFor = (canvasWidth: number): number => (canvasWidth < 480 ? 11 : 12);
 const LANE_ALPHA = 0.09;
 const EYES_FROM_PX = 18;
 const GHOST_LOOK = lookOf('baseline');
@@ -218,6 +221,7 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   let pathLabels: { text: Text; cells: [number, number][] }[] = [];
   const look = new Map<Graphics, string>();
   let gateLabels: Text[] = [];
+  let markerBoxes: { text: string; left: number; top: number; right: number; bottom: number }[] = [];
   const followLabel = new PIXI.Text({ text: '', style: { fontSize: 11, fill: COLOUR.ink, fontFamily: '"DM Mono", ui-monospace, monospace', fontWeight: '500' } });
   followLabel.visible = false;
   layers.labels.addChild(followLabel);
@@ -403,33 +407,65 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     g.stroke(chalkStroke(STROKE_PX, COLOUR.ink));
     g.rect(x0 + WALL_PX / 2, y0 + WALL_PX / 2, floorW - WALL_PX, floorH - WALL_PX).stroke(chalkStroke(WALL_PX, COLOUR.ink));
 
-    // The In and Out doors.
+    // The In and Out doors, the stations and their labels. Marker boxes are the obstacles of the label placement.
+    const px = labelPxFor(width);
+    const markers: { text: string; left: number; top: number; right: number; bottom: number }[] = [];
+    const requests: LabelRequest[] = [];
+    const sizeOf = (t: Text): { w: number; h: number } => {
+      if (t.style.fontSize !== px) t.style.fontSize = px;
+      return { w: t.width, h: t.height };
+    };
     for (const [cell, label] of [[layout.entrance, 0], [layout.exit, 1]] as const) {
       const [sx, sy] = screen(cell[0], cell[1]);
       g.rect(sx, sy, cellScreen, cellScreen).fill({ color: COLOUR.board }).stroke(chalkStroke(STROKE_PX, COLOUR.ink));
+      markers.push({ text: label === 0 ? 'In' : 'Out', left: sx, top: sy, right: sx + cellScreen, bottom: sy + cellScreen });
       const t = gateLabels[label];
-      if (t !== undefined) {
-        t.visible = true;
-        t.position.set(...keepInside(t, sx + 2, sy + 2));
-      }
+      if (t === undefined) continue;
+      const { w, h } = sizeOf(t);
+      const east = { x: sx + cellScreen + 3, y: sy + cellScreen / 2 - h / 2 };
+      const west = { x: sx - 3 - w, y: sy + cellScreen / 2 - h / 2 };
+      // The label sits beside its door, on the side that has the room.
+      requests.push({ id: `gate${label}`, w, h, candidates: sx + cellScreen / 2 < width / 2 ? [east, west] : [west, east] });
     }
-    // Stations: a 10% chalk fill, a chalk outline, the name above.
+    // Stations: a 10% chalk fill, a chalk outline, the name above (or beside or below where the canvas has no room above).
     for (const s of stations) {
       const [sx, sy] = screen(s.cell[0], s.cell[1]);
       g.rect(sx, sy, cellScreen, cellScreen).fill({ color: COLOUR.ink, alpha: 0.1 }).stroke(chalkStroke(STROKE_PX, COLOUR.ink));
+      markers.push({ text: s.label, left: sx, top: sy, right: sx + cellScreen, bottom: sy + cellScreen });
       const t = stationLabels.get(s.id);
-      if (t !== undefined) {
-        t.visible = true;
-        t.position.set(...keepInside(t, sx, sy - 14));
-      }
+      if (t === undefined) continue;
+      const { w, h } = sizeOf(t);
+      const cx = sx + cellScreen / 2 - w / 2;
+      requests.push({
+        id: `station:${s.id}`, w, h,
+        candidates: [
+          { x: cx, y: sy - h - 2 }, { x: cx, y: sy + cellScreen + 2 },
+          { x: sx + cellScreen + 3, y: sy + cellScreen / 2 - h / 2 }, { x: sx - 3 - w, y: sy + cellScreen / 2 - h / 2 },
+        ],
+      });
     }
-    // Distances beside the dotted paths.
-    for (const p of pathLabels) {
+    // Distances beside the dotted paths; the first thing to go when a label has no room.
+    for (const [i, p] of pathLabels.entries()) {
       const mid = p.cells[Math.floor(p.cells.length / 2)] as [number, number];
       const [mx, my] = screen(mid[0] + 0.5, mid[1] + 0.5);
-      p.text.visible = true;
-      p.text.position.set(...keepInside(p.text, mx - p.text.width / 2, my - p.text.height - 3));
+      const { w, h } = sizeOf(p.text);
+      requests.push({
+        id: `path:${String(i)}`, w, h, optional: true,
+        candidates: [{ x: mx - w / 2, y: my - h - 3 }, { x: mx - w / 2, y: my + 3 }, { x: mx + 4, y: my - h / 2 }, { x: mx - 4 - w, y: my - h / 2 }],
+      });
     }
+    const spots = placeLabels({ w: width, h: viewHeight }, markers, requests, 1);
+    const put = (t: Text | undefined, id: string): void => {
+      if (t === undefined) return;
+      const at = spots.get(id) ?? null;
+      t.visible = at !== null;
+      if (at !== null) t.position.set(at.x, at.y);
+    };
+    put(gateLabels[0], 'gate0');
+    put(gateLabels[1], 'gate1');
+    for (const s of stations) put(stationLabels.get(s.id), `station:${s.id}`);
+    for (const [i, p] of pathLabels.entries()) put(p.text, `path:${String(i)}`);
+    markerBoxes = markers;
   }
 
   function spritePosition(stations: Scenario['stations'], a: AttendeeSample): [number, number] {
@@ -689,6 +725,7 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   /** Test aid: the canvas size and the bounds, in canvas CSS px, of every visible station label and of the entrance and exit labels. */
   const labelBounds = (): Record<string, unknown> => ({
     canvas: { width, height: viewHeight },
+    markers: markerBoxes,
     labels: [...stationLabels.values(), ...gateLabels]
       .filter((t) => t.visible)
       .map((t) => ({ text: t.text, left: t.x, top: t.y, right: t.x + t.width, bottom: t.y + t.height })),

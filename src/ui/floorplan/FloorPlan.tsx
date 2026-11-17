@@ -6,12 +6,16 @@ import { useEditorState } from '../state/useEditorState';
 import { keyActions } from './cursor';
 import { useStationDrag } from './drag';
 import { CELL_UNITS, MAX_ZOOM, MIN_ZOOM, ZOOM_STEP, cellCentre, cellOrigin, clampZoom, fitZoom, scrollAfterZoom } from './grid';
+import { placeLabels, type LabelRequest, type Point } from '../../replay/labelPlacement';
 import { routeSegments } from './routes';
 
 /** Fit may use this share of the window height (the wrapper's max-height in app.css), so a wide grid fills the width. */
 const FIT_HEIGHT_SHARE = 0.85;
 /** The lane east of a station: ten queue slots 0.7 cell apart, as the game view lays them out. */
 const LANE_CELLS = 9 * 0.7 + 1;
+/** Label text is at least this many CSS px tall on screen, whatever the zoom: 11 on a wide window, 10 on a phone. */
+const labelPx = (): number => (window.innerWidth < 480 ? 10 : 11);
+const LANE_TEXT = 'the line forms here';
 
 export const FLOOR_PLAN_KEY_HELP =
   'Arrow keys move the selected station or the cell cursor, Space toggles a blocked cell, E sets the entrance, X sets the exit, Escape clears the selection, Tab leaves the floor plan.';
@@ -131,6 +135,58 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
   const entrance = cellOrigin(layout.entrance);
   const exit = cellOrigin(layout.exit);
 
+  // Labels are placed in user units with a font that is labelPx() CSS px on screen (never below the 8 unit base), clear of the
+  // markers and of each other. Widths are estimated at 0.6 em a character, a little wider than the bundled font.
+  const fontUnits = Math.max(8, labelPx() / zoom);
+  const lineH = fontUnits * 1.3;
+  const textW = (s: string): number => s.length * fontUnits * 0.6 + 2;
+  const pad = 3 / zoom;
+  const markerBoxes = [
+    ...scenario.stations.map((s) => cellOrigin(drag !== null && drag.stationId === s.id ? drag.current : s.cell)),
+    entrance,
+    exit,
+  ].map((o) => ({ left: o.x, top: o.y, right: o.x + CELL_UNITS, bottom: o.y + CELL_UNITS }));
+  const requests: LabelRequest[] = [];
+  const beside = (o: Point, w: number, h: number, eastFirst: boolean): Point[] => {
+    const east = { x: o.x + CELL_UNITS + pad, y: o.y + CELL_UNITS / 2 - h / 2 };
+    const west = { x: o.x - pad - w, y: o.y + CELL_UNITS / 2 - h / 2 };
+    return eastFirst ? [east, west] : [west, east];
+  };
+  for (const [id, text, o] of [['gate:in', 'In', entrance], ['gate:out', 'Out', exit]] as const) {
+    requests.push({ id, w: textW(text), h: lineH, candidates: beside(o, textW(text), lineH, o.x + CELL_UNITS / 2 < width / 2) });
+  }
+  for (const station of scenario.stations) {
+    const o = cellOrigin(drag !== null && drag.stationId === station.id ? drag.current : station.cell);
+    const w = textW(station.label);
+    const cx = o.x + CELL_UNITS / 2 - w / 2;
+    requests.push({ id: `station:${station.id}`, w, h: lineH, candidates: [{ x: cx, y: o.y - lineH - 1 }, { x: cx, y: o.y + CELL_UNITS + 1 }, ...beside(o, w, lineH, true)] });
+  }
+  for (const station of scenario.stations) {
+    const o = cellOrigin(drag !== null && drag.stationId === station.id ? drag.current : station.cell);
+    const w = textW(LANE_TEXT);
+    requests.push({
+      id: `lane:${station.id}`, w, h: lineH,
+      candidates: [{ x: o.x + CELL_UNITS + 3, y: o.y + CELL_UNITS / 2 - lineH / 2 }, { x: o.x + CELL_UNITS + 3, y: o.y + CELL_UNITS + 1 }, { x: o.x + CELL_UNITS + 3, y: o.y - lineH - 1 }],
+    });
+  }
+  segments.forEach((segment, i) => {
+    const mid =
+      segment.kind === 'no-path'
+        ? { x: (cellCentre(segment.fromCell).x + cellCentre(segment.toCell).x) / 2, y: (cellCentre(segment.fromCell).y + cellCentre(segment.toCell).y) / 2 }
+        : cellCentre(segment.cells[Math.floor(segment.cells.length / 2)] as [number, number]);
+    const w = textW(segment.label);
+    requests.push({
+      id: `route:${i}`, w, h: lineH,
+      candidates: [{ x: mid.x - w / 2, y: mid.y - lineH - 2 }, { x: mid.x - w / 2, y: mid.y + 2 }, { x: mid.x + pad, y: mid.y - lineH / 2 }, { x: mid.x - pad - w, y: mid.y - lineH / 2 }],
+    });
+  });
+  const spots = placeLabels({ w: width, h: height }, markerBoxes, requests, 1 / zoom);
+  /** The text attributes of a placed label: its left edge and baseline in user units, at the screen-constant font size. */
+  const at = (id: string): { x: number; y: number; style: { fontSize: number } } => {
+    const p = spots.get(id) ?? { x: 0, y: 0 };
+    return { x: p.x, y: p.y + fontUnits, style: { fontSize: fontUnits } };
+  };
+
   return (
     <div className="floorplan">
       <div role="group" aria-label="Floor plan zoom" className="toolbar">
@@ -192,7 +248,7 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
               return (
                 <g key={station.id} className="lane" data-lane={station.id}>
                   <rect x={o.x + CELL_UNITS} y={o.y + 1} width={laneW * CELL_UNITS} height={CELL_UNITS - 2} rx="6" />
-                  <text x={o.x + CELL_UNITS + 5} y={o.y + CELL_UNITS / 2 + 3}>the line forms here</text>
+                  <text x={at(`lane:${station.id}`).x} y={at(`lane:${station.id}`).y} style={at(`lane:${station.id}`).style}>{LANE_TEXT}</text>
                 </g>
               );
             })}
@@ -200,12 +256,12 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
           <g data-role="entrance" pointerEvents="none">
             <title>{`Entrance (${layout.entrance[0]}, ${layout.entrance[1]})`}</title>
             <rect className="gate" filter="url(#chalk-rough)" x={entrance.x} y={entrance.y} width={CELL_UNITS} height={CELL_UNITS} />
-            <text className="gate-text" x={entrance.x + CELL_UNITS / 2} y={entrance.y + 11} textAnchor="middle">In</text>
+            <text className="gate-text" x={at('gate:in').x} y={at('gate:in').y} style={at('gate:in').style}>In</text>
           </g>
           <g data-role="exit" pointerEvents="none">
             <title>{`Exit (${layout.exit[0]}, ${layout.exit[1]})`}</title>
             <rect className="gate" filter="url(#chalk-rough)" x={exit.x} y={exit.y} width={CELL_UNITS} height={CELL_UNITS} />
-            <text className="gate-text" x={exit.x + CELL_UNITS / 2} y={exit.y + 11} textAnchor="middle">Out</text>
+            <text className="gate-text" x={at('gate:out').x} y={at('gate:out').y} style={at('gate:out').style}>Out</text>
           </g>
           <g pointerEvents="none">
             {segments.map((segment, i) => {
@@ -215,7 +271,7 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
                 return (
                   <g key={i} className="route no-path">
                     <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} strokeDasharray="4 3" filter="url(#chalk-rough)" />
-                    <text className="route-label" x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 3} textAnchor="middle">{segment.label}</text>
+                    <text className="route-label" x={at(`route:${i}`).x} y={at(`route:${i}`).y} style={at(`route:${i}`).style}>{segment.label}</text>
                   </g>
                 );
               }
@@ -223,11 +279,10 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
                 const p = cellCentre(c);
                 return `${p.x},${p.y}`;
               });
-              const mid = cellCentre(segment.cells[Math.floor(segment.cells.length / 2)] as [number, number]);
               return (
                 <g key={i} className="route">
                   <polyline points={points.join(' ')} fill="none" filter="url(#chalk-rough)" />
-                  <text className="route-label" x={mid.x} y={mid.y - 4} textAnchor="middle">{segment.label}</text>
+                  <text className="route-label" x={at(`route:${i}`).x} y={at(`route:${i}`).y} style={at(`route:${i}`).style}>{segment.label}</text>
                 </g>
               );
             })}
@@ -250,10 +305,15 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
               >
                 <rect x={origin.x + 1} y={origin.y + 1} width={CELL_UNITS - 2} height={CELL_UNITS - 2} rx="3" filter="url(#chalk-rough)" />
                 <text x={origin.x + CELL_UNITS / 2} y={origin.y + 11} textAnchor="middle" className="marker-glyph">{station.servers}</text>
-                <text x={origin.x + CELL_UNITS / 2} y={origin.y - 2} textAnchor="middle" className="marker-label">{station.label}</text>
               </g>
             );
           })}
+          {/* Station names sit outside the marker groups, so a marker's box is its cell alone (the drag aims at it). */}
+          <g pointerEvents="none" data-role="station-labels">
+            {scenario.stations.map((station) => (
+              <text key={station.id} x={at(`station:${station.id}`).x} y={at(`station:${station.id}`).y} style={at(`station:${station.id}`).style} className="marker-label">{station.label}</text>
+            ))}
+          </g>
           {selection.kind === 'cell' ? (
             <rect
               className="cursor"

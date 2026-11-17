@@ -6,7 +6,9 @@ import type { ReactElement } from 'react';
 export type SlopePair = { replication: number; baselineMs: number | null; candidateMs: number | null };
 
 const WIDTH = 320;
-const HEIGHT = 150;
+const HEIGHT = 170;
+/** The category names sit below the plot with their own band, clear of the lowest scale label. */
+const CATEGORY_Y = 164;
 const TOP = 12;
 const BOTTOM = 138;
 const LEFT_X = 48;
@@ -72,8 +74,8 @@ export function SlopeChart({ pairs }: { pairs: SlopePair[] }): ReactElement | nu
             pathLength={1}
           />
         ))}
-        <text className="chart-tick" x={LEFT_X} y={g.height - 1} textAnchor="middle">Baseline</text>
-        <text className="chart-tick" x={RIGHT_X} y={g.height - 1} textAnchor="middle">Candidate</text>
+        <text className="chart-tick" x={LEFT_X} y={CATEGORY_Y} textAnchor="middle">Baseline</text>
+        <text className="chart-tick" x={RIGHT_X} y={CATEGORY_Y} textAnchor="middle">Candidate</text>
       </svg>
       <p className="muted">{slopeSummary(pairs)}</p>
     </figure>
