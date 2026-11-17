@@ -19,3 +19,11 @@ Picks made while building without the owner. Each line says what was picked and 
 ## Licence (17 Nov, 9:05 AM)
 
 Pick: MIT, holder Adrian Ferguson (he enters as himself). Why: the rules ask for an open source licence file; MIT is OSI approved, short, and fits every dependency (SheetJS is Apache-2.0). `package.json` gets `"license": "MIT"`. Not picked: Apache-2.0 (longer, adds a NOTICE duty; no gain here).
+
+## Playwright MCP entry (17 Nov, 10:15 AM)
+
+I wrote `.kiro/settings/mcp.json` as the owner's helper, with the exact entry spec 3 task 14 names: `cmd /c npx -y @playwright/mcp@0.0.85 --headless --isolated`, `disabled: false`. Source: `npm view @playwright/mcp version` printed 0.0.85 (modified 2026-11-09); the package readme lists `--headless` ("run browser in headless mode") and `--isolated` ("keep the browser profile in memory"); licence Apache-2.0. Headless keeps every window off the owner's screens. Not picked: leave it disabled (row 30 would read "not applicable" and the MCP use would go unshown).
+
+## Kiro CLI version in the log (17 Nov, 10:30 AM)
+
+`kiro-cli --version` prints 3.4.0; the binary's file time is 2026-11-16 7:46 PM (UTC-5) and the first Kiro run of this repository started at 8:12 PM (`rehearsal-logs/B-sc.log` line 1). So every log row ran on 3.4.0, and the Surface cells now say `Kiro CLI 3.4.0, model auto`. The specs' rule already said to use the version the CLI prints.

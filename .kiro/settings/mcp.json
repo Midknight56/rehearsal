@@ -1,10 +1,10 @@
 {
   "mcpServers": {
     "playwright": {
-      "command": "<verify at scaffold time: launch command of the Playwright MCP server, copied from that server's own documentation; never a guessed package name>",
-      "args": ["<verify at scaffold time: launch arguments, version pinned and recorded in docs/kiro-log.md before the first use>"],
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "@playwright/mcp@0.0.85", "--headless", "--isolated"],
       "env": {},
-      "disabled": true,
+      "disabled": false,
       "autoApprove": []
     }
   }
