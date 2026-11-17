@@ -16,7 +16,7 @@ export type StationList = Scenario['stations'];
 const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /** The index of the last event with timeMs <= tMs (the engine's later event wins at equal times), or -1. */
-function lastAtOrBefore(events: AttendeeEvent[], tMs: number): number {
+export function lastAtOrBefore(events: AttendeeEvent[], tMs: number): number {
   let lo = 0;
   let hi = events.length - 1;
   let found = -1;

@@ -1,34 +1,106 @@
-/* The run sheet (requirement 8.3). On screen it is a card like the other panels; under print only the sheet is shown, on
-   white, at 10.5 pt with 12 mm margins and no row split across pages. */
-.run-sheet {
-  max-width: 180mm;
-  margin: 12px auto 0;
-  padding: 12px 16px;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+/* The run sheet. On screen it is a white paper sheet on a dark tray; under print only the sheet is shown, on white, at
+   10.5 pt with 12 mm margins and no row split across pages. */
+@media screen {
+  main.print-screen {
+    background: var(--board-deep);
+    border-radius: var(--radius-card);
+    margin: 16px 48px 48px;
+    padding: 24px 24px 48px;
+  }
+
+  .run-sheet {
+    max-width: 816px;
+    margin: 12px auto 0;
+    padding: 60px 64px;
+    background: var(--paper);
+    color: var(--print-ink);
+    border: 0;
+    border-radius: 2px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+  }
+
+  /* A word is never split: a table that is wider than the sheet scrolls sideways inside its own wrapper. */
+  .run-sheet .table-scroll {
+    overflow-x: auto;
+  }
+
+  .run-sheet .nb {
+    white-space: nowrap;
+  }
+
+  .run-sheet h1 {
+    font: 700 44px/1.1 var(--font-display);
+    color: var(--print-ink);
+    margin: 0 0 8px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--print-ink);
+  }
+
+  .run-sheet h2 {
+    font: 700 22px/1.2 var(--font-display);
+    color: var(--print-ink);
+  }
+
+  .run-sheet caption {
+    font: 600 16px/1.2 var(--font-display);
+    color: var(--print-ink);
+  }
+
+  .run-sheet section {
+    margin-top: 16px;
+  }
+
+  .run-sheet table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+
+  .run-sheet th,
+  .run-sheet td {
+    border: 1px solid #8a928e;
+    padding: 4px 8px;
+    text-align: left;
+    vertical-align: top;
+    color: var(--print-ink);
+  }
+
+  .run-sheet thead th {
+    background: #eef0ee;
+    color: var(--print-ink);
+    letter-spacing: 0.04em;
+  }
+
+  .run-sheet .hash,
+  .run-sheet #assumptions p:first-of-type {
+    font-family: var(--font-mono);
+  }
 }
 
-.run-sheet h1 {
-  font-size: 1.3rem;
-}
+@media screen and (max-width: 640px) {
+  main.print-screen {
+    margin: 8px 16px 32px;
+    padding: 16px 8px 32px;
+  }
 
-.run-sheet section {
-  margin-top: 10px;
-}
+  .run-sheet {
+    padding: 24px 16px;
+  }
 
-.run-sheet table {
-  width: 100%;
-  border-collapse: collapse;
-}
+  .run-sheet h1 {
+    font-size: 26px;
+  }
 
-.run-sheet th,
-.run-sheet td {
-  border: 1px solid var(--line);
-  padding: 2px 6px;
-  text-align: left;
-  vertical-align: top;
-  overflow-wrap: anywhere;
+  .run-sheet table {
+    font-size: 13px;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .run-sheet .hash-line {
+    white-space: nowrap;
+    overflow-x: auto;
+  }
 }
 
 @page {
@@ -43,6 +115,10 @@
     font-size: 10.5pt;
   }
 
+  body {
+    background-image: none;
+  }
+
   #status,
   .no-print,
   canvas {
@@ -51,6 +127,8 @@
 
   main.print-screen {
     padding: 0;
+    margin: 0;
+    animation: none;
   }
 
   .run-sheet {
@@ -60,9 +138,6 @@
     border: 0;
     background: #fff;
     color: #000;
-  }
-
-  .run-sheet {
     line-height: 1.25;
   }
 
@@ -100,9 +175,19 @@
     page-break-inside: avoid;
   }
 
+  .run-sheet table {
+    font-size: inherit;
+  }
+
+  .run-sheet caption {
+    font-size: inherit;
+    padding-bottom: 1pt;
+  }
+
   .run-sheet th,
   .run-sheet td {
-    border-color: #999;
+    border: 1px solid #999;
     padding: 1pt 4pt;
+    color: #000;
   }
 }

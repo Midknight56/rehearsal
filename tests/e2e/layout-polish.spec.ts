@@ -40,7 +40,7 @@ async function floorPixels(page: Page): Promise<{ width: number; height: number;
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const i = (y * width + x) * 4;
-        const differs = Math.abs((data[i] as number) - 11) > 6 || Math.abs((data[i + 1] as number) - 18) > 6 || Math.abs((data[i + 2] as number) - 32) > 6;
+        const differs = Math.abs((data[i] as number) - 35) > 6 || Math.abs((data[i + 1] as number) - 59) > 6 || Math.abs((data[i + 2] as number) - 51) > 6;
         if (!differs) continue;
         if (box === null) box = { left: x, top: y, right: x + 1, bottom: y + 1 };
         else {

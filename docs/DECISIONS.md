@@ -31,3 +31,14 @@ I wrote `.kiro/settings/mcp.json` as the owner's helper, with the exact entry sp
 ## Files not written by Kiro (17 Nov, 11:15 AM)
 
 Kiro wrote the application code and its tests. Written by hand instead: `LICENSE`, `.kiro/settings/mcp.json`, the `"license"` field of `package.json`, the "Judging criteria at a glance" block of `README.md`, the one test in `tests/comparison/readme-limits.test.ts` that checks that block (it replaced the placeholder check), the no dash pass over the Markdown files, and this file.
+
+## Visual design pass (17 Nov, 3:15 PM)
+
+The owner made a new look for the app: a blackboard, chalk lines and guests drawn as small ghosts. Kiro applied it in two runs (log rows "maintenance: blackboard design" and "maintenance: blackboard design, fixes"). Picks made in the prompts, not by Kiro:
+- The real controls, labels and table columns stay word for word. Controls that the design pictures showed but the app does not have were not added (no section checkboxes on the run sheet, no stepper on Plan, no "Save as PDF").
+- No new tab bar: 22 lines in `tests/` find a screen button by name with no `.first()`, and Playwright fails when two elements share that name. The existing screen buttons sit in the new top bar instead.
+- The three fonts are bundled from pinned `@fontsource` packages (OFL 1.1) so every request stays on the same origin, as the accessibility steering and `tests/e2e/network.spec.ts` require. The design's own font link pointed at an outside host.
+- The two new charts draw only real data: the Compare slope chart (paired `queueWait.mean` per replication) and the Game view "People waiting, minute by minute" (from `sampleAt`). Each has a test that the drawn values equal the data.
+- The model, the trace, the metrics, `MODEL_VERSION` and `expected.json` did not change.
+
+State at this entry: both runs done, verify green (281 model, 454 UI), browser tests being rerun after a run where the preview server stopped early. Before and after stills of Plan, Game view, Compare and Run sheet at 1920 by 1080 and 360 by 640 go to the lead for the owner. The film and gallery wait for the owner's yes on those stills.

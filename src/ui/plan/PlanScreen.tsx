@@ -21,6 +21,7 @@ import type { SavedScenarios } from '../saved';
 import { SaveBar } from '../SaveBar';
 import { SaveError } from '../SaveError';
 import { PrintControls } from '../print/PrintControls';
+import { TopBar } from '../TopBar';
 
 export function PlanScreen({ store, controller, saved }: { store: EditorStore; controller: RunController; saved?: SavedScenarios }): ReactElement {
   const state = useEditorState(store);
@@ -54,6 +55,11 @@ export function PlanScreen({ store, controller, saved }: { store: EditorStore; c
   }, [store]);
 
   return (
+    <>
+    <TopBar>
+      <button type="button" onClick={() => { requestHeadingFocus(); store.dispatch({ type: 'screen/set', screen: 'compare' }); }}>Compare</button>
+      <PrintControls store={store} part="sheet" />
+    </TopBar>
     <main>
       <h1>{state.scenario.title}</h1>
       <ScenarioTabs store={store} />
@@ -64,9 +70,8 @@ export function PlanScreen({ store, controller, saved }: { store: EditorStore; c
         {canRedo ? null : <span className="muted">Nothing to redo.</span>}
         <button type="button" onClick={() => store.dispatch({ type: 'import/open' })}>Import</button>
         <Templates />
-        <button type="button" onClick={() => { requestHeadingFocus(); store.dispatch({ type: 'screen/set', screen: 'compare' }); }}>Compare</button>
         <OpenJson store={store} label="Open JSON" />
-        <PrintControls store={store} />
+        <PrintControls store={store} part="workbook" />
         {saved === undefined ? null : <SaveBar store={store} saved={saved} />}
         <label>
           Motion{' '}
@@ -100,5 +105,6 @@ export function PlanScreen({ store, controller, saved }: { store: EditorStore; c
         <ResultTables store={store} />
       </section>
     </main>
+    </>
   );
 }

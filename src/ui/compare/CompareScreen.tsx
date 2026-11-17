@@ -2,7 +2,7 @@
 // change list, the metric cards, the station table and the replay with the baseline ghost, and saves a summary. It computes
 // nothing: every number comes from the Comparison and every sentence from src/comparison/labels.ts.
 import { useMemo, useState, type ReactElement } from 'react';
-import { saveErrorText, timingText } from '../../comparison/labels';
+import { STALE_TEXT, saveErrorText, timingText } from '../../comparison/labels';
 import { toComparisonSummary } from '../../comparison/summary';
 import { browserStorage } from '../../storage/browser';
 import { createComparisonStore } from '../../storage/comparisons';
@@ -19,8 +19,12 @@ import { MetricCard } from './MetricCard';
 import { PickScenarios } from './PickScenarios';
 import { ReplicateSelect } from './ReplicateSelect';
 import { StationTable } from './StationTable';
+import { SlopeChart, type SlopePair } from './SlopeChart';
+import { compareHeadline } from './headline';
+import { NoBreak } from '../noBreak';
+import { TopBar } from '../TopBar';
 import type { CompareController } from './controller';
-import { compareStatusText } from './status';
+import { compareStatusText, isCompareStale } from './status';
 
 type Props = { store: EditorStore; controller: CompareController; storage?: Storage | null; saved?: SavedScenarios; createView?: typeof createGameView };
 
@@ -35,6 +39,13 @@ export function CompareScreen({ store, controller, storage, saved: savedProp, cr
   const saved = useMemo(() => savedProp ?? createSavedScenarios(store, places), [savedProp, store, places]);
   const [savedTick, setSavedTick] = useState(0);
   const savedComparisons = useMemo(() => comparisons.list(), [comparisons, savedTick]);
+
+  const headlineMetric = view?.metrics.find((m) => m.key === 'queueWait.mean');
+  const headline = headlineMetric === undefined ? null : compareHeadline(headlineMetric);
+  const slopePairs = useMemo<SlopePair[] | null>(() => {
+    const metric = comparison?.metrics.find((m) => m.key === 'queueWait.mean');
+    return metric === undefined ? null : metric.differences.map((d) => ({ replication: d.replication, baselineMs: d.baseline, candidateMs: d.candidate }));
+  }, [comparison]);
 
   const equalPicks = compare.baselineKey === compare.candidateKey;
   const runBlocked = compare.running || compare.loadingReplication !== null || equalPicks;
@@ -78,11 +89,12 @@ export function CompareScreen({ store, controller, storage, saved: savedProp, cr
   };
 
   return (
+    <>
+    <TopBar>
+      <button type="button" onClick={() => { requestHeadingFocus(); store.dispatch({ type: 'screen/set', screen: 'plan' }); }}>Back to plan</button>
+    </TopBar>
     <main className="compare">
       <h1>Compare scenarios</h1>
-      <div className="toolbar">
-        <button type="button" onClick={() => { requestHeadingFocus(); store.dispatch({ type: 'screen/set', screen: 'plan' }); }}>Back to plan</button>
-      </div>
       <section className="panel" aria-label="Pick scenarios">
         <PickScenarios store={store} />
         <div className="toolbar">
@@ -108,41 +120,53 @@ export function CompareScreen({ store, controller, storage, saved: savedProp, cr
       </section>
 
       {ghost === undefined ? null : <GameViewPanel store={store} ghost={ghost} {...(createView === undefined ? {} : { createView })} />}
-      {comparison === null ? null : (
-        <div className="toolbar">
-          <ReplicateSelect
-            replication={comparison.replay.replication}
-            busy={compare.loadingReplication !== null || compare.running}
-            onSelect={(r) => controller.selectReplicate(r)}
-          />
-        </div>
-      )}
-
       {view === null ? null : (
-        <>
-          <ChangeList view={view} />
-          <section className="panel" aria-label="Scenario hashes">
-            <p data-testid="scenario-hash-baseline">{`Baseline scenario hash: ${view.baseline.scenarioHash}`}</p>
-            <p data-testid="scenario-hash-candidate">{`Candidate scenario hash: ${view.candidate.scenarioHash}`}</p>
-          </section>
-          <section className="panel" aria-label="Metric cards">
-            <div className="cards">
-              {view.metrics.map((metric) => (
-                <MetricCard key={metric.key} metric={metric} view={view} />
-              ))}
-            </div>
-          </section>
-          <section className="panel" aria-label="Stations">
-            <StationTable view={view} />
-          </section>
-          <p className="muted">{timingText(view.timing.pairedMs)}</p>
-          <div className="toolbar">
-            <button type="button" data-testid="save-scenario" onClick={() => void onSave()}>Save</button>
+        <div className="compare-layout">
+          <div className="compare-side">
+            <ChangeList view={view} />
+            {headline === null ? null : (
+              <section className="headline" aria-label="Headline" data-testid="compare-headline">
+                {isCompareStale(state) ? <p><strong>{STALE_TEXT}</strong></p> : null}
+                <p className="headline-text"><NoBreak text={headline.headline} /></p>
+                {headline.detail === null ? null : <p className="headline-detail" data-testid="compare-headline-detail"><NoBreak text={headline.detail} /></p>}
+                {headline.note === null ? null : <p className="muted">{headline.note}</p>}
+              </section>
+            )}
+            {slopePairs === null ? null : <SlopeChart pairs={slopePairs} />}
+            {comparison === null ? null : (
+              <div className="toolbar">
+                <ReplicateSelect
+                  replication={comparison.replay.replication}
+                  busy={compare.loadingReplication !== null || compare.running}
+                  onSelect={(r) => controller.selectReplicate(r)}
+                />
+              </div>
+            )}
+            <section className="panel hashes" aria-label="Scenario hashes">
+              <p data-testid="scenario-hash-baseline">{`Baseline scenario hash: ${view.baseline.scenarioHash}`}</p>
+              <p data-testid="scenario-hash-candidate">{`Candidate scenario hash: ${view.candidate.scenarioHash}`}</p>
+            </section>
           </div>
-          <SaveError store={store} onRetry={() => void onSave()} />
-        </>
-      )}
-      <ExportControls store={store} />
+          <div className="compare-main">
+            <section className="panel" aria-label="Metric cards">
+              <div className="cards">
+                {view.metrics.map((metric) => (
+                  <MetricCard key={metric.key} metric={metric} view={view} />
+                ))}
+              </div>
+            </section>
+            <section className="panel" aria-label="Stations">
+              <StationTable view={view} />
+            </section>
+            <p className="muted">{timingText(view.timing.pairedMs)}</p>
+            <div className="toolbar">
+              <button type="button" data-testid="save-scenario" onClick={() => void onSave()}>Save</button>
+            </div>
+            <SaveError store={store} onRetry={() => void onSave()} />
+          </div>
+        </div>
+      )}      <ExportControls store={store} />
     </main>
+    </>
   );
 }

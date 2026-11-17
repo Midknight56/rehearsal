@@ -5,6 +5,7 @@ import type { SavedScenarios } from '../saved';
 import type { EditorStore } from '../state/store';
 import { useEditorState } from '../state/useEditorState';
 import { loadExample } from './loadExample';
+import { TopBar } from '../TopBar';
 
 export function Landing(props: { store: EditorStore; saved?: SavedScenarios; fetchImpl?: typeof fetch; baseUrl?: string; onImport?: () => void }): ReactElement {
   const { store, saved } = props;
@@ -28,6 +29,8 @@ export function Landing(props: { store: EditorStore; saved?: SavedScenarios; fet
   const confirmed = items.find((item) => item.id === confirming);
 
   return (
+    <>
+    <TopBar />
     <main className="landing">
       <h1>Rehearsal</h1>
       <p>A spreadsheet, a floor plan and a game engine, stitched into an event rehearsal.</p>
@@ -71,5 +74,6 @@ export function Landing(props: { store: EditorStore; saved?: SavedScenarios; fet
         </section>
       )}
     </main>
+    </>
   );
 }

@@ -2,7 +2,7 @@
 // the control row, the wrapper with the key help, the legend and banners, Find attendee, the person timeline and the queue
 // inspector. The controls call the handle; the timeline, the inspector and Find attendee read the sampler, so they keep working
 // when the canvas cannot start. The panel never changes a number and never writes the status region while the clock plays.
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactElement } from 'react';
 import { createGameView, type GameViewHandle, type SamplerOnly } from '../../replay/gameView';
 import { PER_PERSON_OFF, REPLAY_NOTE } from '../../comparison/labels';
 import { attendeePairs, type PopulationChange } from '../../comparison/population';
@@ -18,6 +18,8 @@ import { FindAttendee } from './FindAttendee';
 import { isReducedMotion } from './motion';
 import { PersonTimeline } from './PersonTimeline';
 import { QueueInspector } from './QueueInspector';
+import { WaitingChart } from './WaitingChart';
+import { waitingPerMinute } from '../../replay/waitingSeries';
 import { onRestartRequest, registerView, unavailableView } from './viewRegistry';
 
 export const GAME_KEY_HELP = 'Space plays or pauses, ArrowLeft and ArrowRight step one second, F follows the selected attendee, Escape releases, Tab leaves the game view.';
@@ -67,6 +69,8 @@ export function GameViewPanel({ store, createView = createGameView, ghost }: Pro
   reducedRef.current = reduced;
 
   const index = useMemo(() => (result === null || result.result.trace === undefined ? null : buildIndex(result.result.trace, result.snapshot.stations)), [result?.result]);
+  const chartEndMs = ghost?.selection.clock.endMs ?? index?.endMs ?? 0;
+  const waitingSeries = useMemo(() => (index === null ? null : waitingPerMinute(index, chartEndMs)), [index, chartEndMs]);
   const attendeeIds = useMemo(() => (index === null ? [] : index.attendees.map((a) => a.id)), [index]);
   const labels = useMemo(() => Object.fromEntries((result?.snapshot.stations ?? []).map((s) => [s.id, s.label])), [result?.snapshot]);
   // The heading appears once the trace is loaded into the view, so everything below it is in place when it shows.
@@ -268,6 +272,7 @@ export function GameViewPanel({ store, createView = createGameView, ghost }: Pro
       step={1000}
       value={Math.min(clock.ms, endMs)}
       ref={scrubberRef}
+      style={{ '--fill': `${endMs === 0 ? 0 : (Math.min(clock.ms, endMs) / endMs) * 100}%` } as CSSProperties}
       onChange={(e) => seekRef.current(Number(e.target.value))}
     />,
     <span key="readout">{`${formatMinutesSeconds(clock.ms)} / ${formatMinutesSeconds(endMs)}`}</span>,
@@ -306,6 +311,8 @@ export function GameViewPanel({ store, createView = createGameView, ghost }: Pro
   return (
     <section className="panel game-view" aria-labelledby={`${helpId}-heading`} onKeyDown={onPanelKey} data-testid="game-view-panel">
       {ready ? <h2 id={`${helpId}-heading`} aria-label="Game view">Game view{result === null ? null : <span className="muted">{` \u00b7 scenario hash ${result.hash.slice(0, 8)}`}</span>}</h2> : null}
+      <div className="game-layout">
+      <div className="game-main">
       {result === null ? (
         <p className="muted">No replay yet. Activate Simulate to run replication 0 and watch it here.</p>
       ) : (
@@ -348,13 +355,22 @@ export function GameViewPanel({ store, createView = createGameView, ghost }: Pro
       )}
       <p id={`${helpId}-help`} className="visually-hidden">{GAME_KEY_HELP}</p>
       {wrapper}
-      <FindAttendee attendeeIds={attendeeIds} onPick={pick} onFollow={(id) => followAttendee(id)} />
       {result === null ? null : (
         <>
-          <p className="muted">{LEGEND}</p>
+          <p className="muted legend">
+            <span className="wait-ramp" aria-hidden="true" />
+            {LEGEND}
+          </p>
           {present > SPRITE_CAP ? (
             <p>{`Showing ${SPRITE_CAP.toLocaleString('en-US')} of ${present.toLocaleString('en-US')} attendees as sprites; the others are counted in the badges and every table is complete.`}</p>
           ) : null}
+        </>
+      )}
+      </div>
+      <div className="game-side">
+      <FindAttendee attendeeIds={attendeeIds} onPick={pick} onFollow={(id) => followAttendee(id)} />
+      {result === null ? null : (
+        <>
           <PersonTimeline attendeeId={attendee} rows={rows} baselineRow={baselineRow} onKeyDown={(e) => {
             if (e.key === 'f' || e.key === 'F') {
               e.preventDefault();
@@ -363,8 +379,11 @@ export function GameViewPanel({ store, createView = createGameView, ghost }: Pro
           }} />
           {ghost !== undefined && ghost.languageMode === 'population' && attendee !== null ? <p className="muted">{PER_PERSON_OFF}</p> : null}
           <QueueInspector stationLabel={inspected?.label ?? null} clockMs={clock.ms} sample={inspected === null ? null : (sample.perStation[inspected.id] ?? null)} />
+          {waitingSeries === null ? null : <WaitingChart series={waitingSeries} clockMs={clock.ms} />}
         </>
       )}
+      </div>
+      </div>
     </section>
   );
 }

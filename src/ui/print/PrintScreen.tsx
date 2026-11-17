@@ -7,6 +7,7 @@ import { requestHeadingFocus, useHeadingFocus } from '../focus';
 import { blockedMessage } from '../run/controller';
 import type { EditorStore } from '../state/store';
 import { useEditorState } from '../state/useEditorState';
+import { TopBar } from '../TopBar';
 import { resultsLine } from './resultsLine';
 import { RunSheetView } from './RunSheetView';
 
@@ -33,11 +34,14 @@ export function PrintScreen({ store }: { store: EditorStore }): ReactElement {
   };
 
   return (
+    <>
+    <TopBar>
+      <button type="button" onClick={back}>Back to plan</button>
+    </TopBar>
     <main className="print-screen">
       <div className="toolbar no-print" role="group" aria-label="Run sheet actions">
         <button type="button" onClick={() => window.print()} aria-disabled={model === null ? 'true' : undefined}>Print</button>
         <button type="button" onClick={saveHtml} aria-disabled={model === null ? 'true' : undefined}>Save as HTML</button>
-        <button type="button" onClick={back}>Back to plan</button>
       </div>
       {model === null ? (
         <>
@@ -48,5 +52,6 @@ export function PrintScreen({ store }: { store: EditorStore }): ReactElement {
         <RunSheetView model={model} results={resultsLine(state, state.currentIndex)} />
       )}
     </main>
+    </>
   );
 }

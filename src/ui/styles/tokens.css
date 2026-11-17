@@ -1,15 +1,38 @@
-/* Design tokens. Contrast is computed from these values by tests/ui/styles.test.ts (WCAG relative luminance). */
+/* Design tokens: a school blackboard. Contrast is computed from these values by tests/ui/styles.test.ts (WCAG relative
+   luminance) and the palette is pinned by tests/ui/design-tokens.test.ts. */
 :root {
-  --board: #0b1220;
-  --card: #151f33;
-  --ink: #eef2f8;
-  --ink-muted: #aab6cc;
-  --candidate: #22d3ee;
-  --baseline: #fb923c;
-  --focus: #fde047;
-  --line: #2b3a57;
+  --board: #233B33;
+  --board-deep: #1B2E28;
+  --raised: #2D4A40;
+  --card: #2D4A40;
+  --card-highlight: #34503F;
+  --line: #5E7A6E;
+  --line-soft: rgba(94, 122, 110, 0.5);
+  --card-border: rgba(94, 122, 110, 0.8);
+  --ink: #F2EFE6;
+  --ink-muted: #B9C7BE;
+  --pumpkin: #FF9A3D;
+  --sage: #9FD8B4;
+  --straw: #F2D377;
+  --ember: #FF7F61;
+  --paper: #FFFFFF;
+  --print-ink: #1A1F1C;
+  --wait-ramp: linear-gradient(90deg, #9FD8B4, #F2D377, #FF9A3D, #FF7F61);
+  --grid-line: rgba(242, 239, 230, 0.07);
+
+  /* Roles. Each is a palette colour at least 3:1 on the board. The baseline is also dashed and hatched, never colour alone. */
+  --candidate: #9FD8B4;
+  --baseline: #FF9A3D;
+  --focus: #F2D377;
   --danger: #fca5a5;
-  --radius: 6px;
+
+  --font-ui: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Zilla Slab", Georgia, serif;
+  --font-mono: "DM Mono", ui-monospace, Menlo, Consolas, monospace;
+  --radius: 8px;
+  --radius-card: 12px;
+  --hit: 44px;
+  --edge: 16px;
   color-scheme: dark;
 }
 
@@ -19,7 +42,7 @@
   outline-offset: 2px;
 }
 
-/* Colour is never the only cue: baseline elements carry a dashed outline as well as the orange hue. */
+/* Colour is never the only cue: baseline elements carry a dashed outline as well as the hue. */
 .baseline-layer,
 [data-role="baseline"] {
   outline: 2px dashed var(--baseline);
@@ -46,21 +69,22 @@
   border: 0;
 }
 
-/* Reduced motion: from the system setting or the Motion toggle (data-motion="reduce" on the root element). */
+/* Reduced motion: from the system setting or the Motion toggle (data-motion="reduce" on the root element). Everything appears
+   at once: no pulse, no count up, no line drawing, no cross-fade. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
-    transition: none;
-    animation: none;
-    scroll-behavior: auto;
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
   }
 }
 
 [data-motion="reduce"] *,
 [data-motion="reduce"] *::before,
 [data-motion="reduce"] *::after {
-  transition: none;
-  animation: none;
-  scroll-behavior: auto;
+  transition: none !important;
+  animation: none !important;
+  scroll-behavior: auto !important;
 }

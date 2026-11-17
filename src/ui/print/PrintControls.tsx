@@ -24,7 +24,8 @@ export async function exportCurrentWorkbook(store: EditorStore): Promise<void> {
   }
 }
 
-export function PrintControls({ store }: { store: EditorStore }): ReactElement {
+/** sheet is the Print run sheet button (it sits in the top bar), workbook is Export workbook; both by default. */
+export function PrintControls({ store, part }: { store: EditorStore; part?: 'sheet' | 'workbook' }): ReactElement {
   const { scenario } = useEditorState(store);
   const blocked = useMemo(() => blockedMessage(scenario, createPathCache(scenario).unreachable), [scenario]);
   const open = (): void => {
@@ -37,9 +38,9 @@ export function PrintControls({ store }: { store: EditorStore }): ReactElement {
   };
   return (
     <>
-      <button type="button" aria-disabled={blocked === null ? undefined : 'true'} onClick={open}>Print run sheet</button>
-      {blocked === null ? null : <span className="muted">{blocked}</span>}
-      <button type="button" data-testid="export-workbook" onClick={() => void exportCurrentWorkbook(store)}>Export workbook</button>
+      {part === 'workbook' ? null : <button type="button" aria-disabled={blocked === null ? undefined : 'true'} onClick={open}>Print run sheet</button>}
+      {part === 'workbook' || blocked === null ? null : <span className="muted">{blocked}</span>}
+      {part === 'sheet' ? null : <button type="button" data-testid="export-workbook" onClick={() => void exportCurrentWorkbook(store)}>Export workbook</button>}
     </>
   );
 }

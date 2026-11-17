@@ -6,6 +6,9 @@ Generated 2026-11-17 by `node tests/comparison/tools/third-party-notices.mjs`. L
 
 | Package | Version | License | Source | Used for |
 | --- | --- | --- | --- | --- |
+| @fontsource/dm-mono | 5.3.0 | OFL-1.1 | npm |  |
+| @fontsource/schibsted-grotesk | 5.3.0 | OFL-1.1 | npm |  |
+| @fontsource/zilla-slab | 5.3.0 | OFL-1.1 | npm |  |
 | @pixi/colord | 2.9.6 | MIT | npm |  |
 | @types/earcut | 3.0.0 | MIT | npm |  |
 | @webgpu/types | 0.1.74 | BSD-3-Clause | npm |  |

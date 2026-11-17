@@ -7,9 +7,11 @@ import {
   staffHoursLine, stationRows, walkingRows, type RunSheetModel, type RunSheetRow,
 } from '../../exports/run-sheet';
 import { NOT_A_FORECAST } from '../../exports/assumptions-text';
+import { NoBreak } from '../noBreak';
 
 function SheetTable({ spec, rows }: { spec: { title: string; columns: readonly string[] }; rows: RunSheetRow[] }): ReactElement {
   return (
+    <div className="table-scroll" role="group" aria-label={` table`} tabIndex={0}>
     <table>
       <caption>{spec.title}</caption>
       <thead>
@@ -30,6 +32,7 @@ function SheetTable({ spec, rows }: { spec: { title: string; columns: readonly s
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
 
@@ -37,8 +40,8 @@ function SheetTable({ spec, rows }: { spec: { title: string; columns: readonly s
 export function RunSheetView({ model, results }: { model: RunSheetModel; results: string }): ReactElement {
   return (
     <article id="run-sheet" className="run-sheet" aria-label="Run sheet">
-      <h1>{runSheetHeading(model)}</h1>
-      <p>{generatedLine(model.generatedAt)}</p>
+      <h1><NoBreak text={runSheetHeading(model)} /></h1>
+      <p><NoBreak text={generatedLine(model.generatedAt)} /></p>
       <section id="cohorts" aria-label={RUN_SHEET_TABLES.cohorts.title}>
         <h2>{RUN_SHEET_TABLES.cohorts.title}</h2>
         <SheetTable spec={RUN_SHEET_TABLES.cohorts} rows={cohortRows(model)} />
@@ -56,20 +59,20 @@ export function RunSheetView({ model, results }: { model: RunSheetModel; results
         <SheetTable spec={RUN_SHEET_TABLES.walking} rows={walkingRows(model)} />
       </section>
       <section id="staff-hours" aria-label="Staff-hours">
-        <p>{staffHoursLine(model)}</p>
+        <p><NoBreak text={staffHoursLine(model)} /></p>
       </section>
-      <p data-testid="run-sheet-results">{results}</p>
+      <p data-testid="run-sheet-results"><NoBreak text={results} /></p>
       <section id="assumptions" aria-label={ASSUMPTIONS_TITLE}>
         <h2>{ASSUMPTIONS_TITLE}</h2>
-        <p>{scenarioHashLine(model)}</p>
-        <p>{modelVersionText(model)}</p>
+        <p className="hash-line" role="group" aria-label="Scenario hash line" tabIndex={0}>{scenarioHashLine(model)}</p>
+        <p><NoBreak text={modelVersionText(model)} /></p>
         <ul aria-label="Model assumptions">
           {model.assumptions.map((line) => (
-            <li key={line}>{line}</li>
+            <li key={line}><NoBreak text={line} /></li>
           ))}
         </ul>
-        <p>{model.limits}</p>
-        <p>{NOT_A_FORECAST}</p>
+        <p><NoBreak text={model.limits} /></p>
+        <p><NoBreak text={NOT_A_FORECAST} /></p>
       </section>
     </article>
   );

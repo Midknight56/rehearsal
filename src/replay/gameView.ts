@@ -22,6 +22,7 @@ import { ghostKey, lookOf, splitLayers } from './ghost';
 import { createPool, type Pool } from './pool';
 import { queueColour, queueSlot } from './queueLine';
 import { sampleAt, type AttendeeSample, type Sample } from './sampler';
+import { longestWaitMs, waitColour, waitedMsAt } from './waitRamp';
 
 export type { Hit } from './core';
 
@@ -32,6 +33,8 @@ export type GameViewDebug = {
   rendererStatus: 'ready' | 'unavailable' | 'destroyed';
   /** Test aid: canvas-relative CSS px of the entrance, the exit and the stations; see buildHandle. */
   projection?: Record<string, unknown> | null;
+  /** Test aid: canvas size and the bounds of every visible label; see buildHandle. */
+  labelBounds?: Record<string, unknown>;
 };
 export interface GameViewHandle {
   load(input: { trace: Trace; layout: Scenario['layout']; stations: Scenario['stations']; label: string; endMs?: number }): void;
@@ -58,10 +61,17 @@ export type CreateGameViewResult =
 export const SPRITE_CAP = 1000;
 export const SPRITE_CAP_WITH_GHOST = 500;
 const CELL_PX = 16;
-const VIEW_HEIGHT = 420;
+
+/** The canvas height for a container width: a short strip on a phone, up to 600 px on a wide screen. Drawing only. */
+export function viewHeightFor(width: number): number {
+  return width < 480 ? Math.max(160, Math.round(width * 0.58)) : Math.min(600, Math.max(420, Math.round(width * 0.46)));
+}
 const MAX_FRAME_MS = 250;
 
-const COLOUR = { floor: 0x151f33, line: 0x2b3a57, ink: 0xeef2f8, blocked: 0x3b4a68, candidate: 0x22d3ee, board: 0x0b1220, focus: 0xfde047 } as const;
+const COLOUR = { floor: 0x1b2e28, line: 0xf2efe6, ink: 0xf2efe6, blocked: 0x5e7a6e, candidate: 0x9fd8b4, board: 0x233b33, boardDeep: 0x1b2e28, focus: 0xf2d377, lane: 0xff9a3d } as const;
+/** The ghost's size in px for a cell size on screen: 26 px on a 40 px cell, 14 px on an 18 px cell. */
+const ghostSize = (cellScreen: number): number => Math.min(30, Math.max(8, cellScreen * 0.65));
+const EYES_FROM_PX = 18;
 const GHOST_LOOK = lookOf('baseline');
 const CANDIDATE_LOOK = lookOf('candidate');
 
@@ -95,13 +105,13 @@ export async function createGameView(opts: GameViewOptions): Promise<CreateGameV
 
   let PIXI: typeof import('pixi.js');
   let app: Application;
-  const width0 = Math.max(320, opts.container.clientWidth || 640);
+  const width0 = Math.max(240, opts.container.clientWidth || 640);
   try {
     PIXI = await import('pixi.js');
     app = new PIXI.Application();
     await app.init({
       width: width0,
-      height: VIEW_HEIGHT,
+      height: viewHeightFor(width0),
       resolution: Math.min(opts.dpr, 2),
       autoDensity: true,
       antialias: true,
@@ -135,15 +145,19 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
 
   let destroyed = false;
   let width = app.screen.width;
-  let camera: Camera = createCamera({ width, height: VIEW_HEIGHT, cellPx: CELL_PX });
+  let viewHeight = app.screen.height;
+  let camera: Camera = createCamera({ width, height: viewHeight, cellPx: CELL_PX });
   let pool: Pool<Graphics> | null = null;
   const sprites: Graphics[] = [];
   let builtFor: LoadInput | null = null;
   let stationLabels = new Map<string, Text>();
   let badgeTexts = new Map<string, Text>();
   let ghostBadgeTexts = new Map<string, Text>();
-  const look = new Map<Graphics, 'candidate' | 'baseline'>();
+  const look = new Map<Graphics, string>();
   let gateLabels: Text[] = [];
+  const followLabel = new PIXI.Text({ text: '', style: { fontSize: 11, fill: COLOUR.ink, fontFamily: '"DM Mono", ui-monospace, monospace', fontWeight: '500' } });
+  followLabel.visible = false;
+  layers.labels.addChild(followLabel);
   let spritesDrawn = 0;
   let wasFollowing = false;
   let aggregatedAttendees = 0;
@@ -152,18 +166,29 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   let lastFrameAt: number | null = null;
 
   const makeText = (text: string, size: number): Text => {
-    const t = new PIXI.Text({ text, style: { fontSize: size, fill: COLOUR.ink } });
+    const t = new PIXI.Text({ text, style: { fontSize: size, fill: COLOUR.ink, fontFamily: '"Schibsted Grotesk", system-ui, sans-serif', fontWeight: '600' } });
     t.visible = false;
     return t;
   };
 
-  /** The candidate layer is solid and cyan; the baseline ghost is translucent, hatched and dashed-outlined, orange. */
-  function paint(g: Graphics, role: 'candidate' | 'baseline'): void {
-    if (look.get(g) === role) return;
+  /**
+   * The candidate layer is a ghost (rounded top, eyes when large enough) drawn white and tinted per frame with its wait colour;
+   * the baseline layer is translucent, hatched and dashed-outlined, in the baseline hue.
+   */
+  function paint(g: Graphics, role: 'candidate' | 'baseline', eyes = false): void {
+    const key = role === 'candidate' ? (eyes ? 'candidate-eyes' : 'candidate') : 'baseline';
+    if (look.get(g) === key) return;
     g.clear();
     if (role === 'candidate') {
-      g.circle(0, 0, 6).fill({ color: CANDIDATE_LOOK.colour, alpha: CANDIDATE_LOOK.alpha }).stroke({ width: 1.5, color: COLOUR.board });
+      // 12 units wide, 13.44 tall: corner radius 6 on the top, 2.4 on the bottom, as the design draws a guest.
+      g.moveTo(-6, 4.32).lineTo(-6, -0.72).arc(0, -0.72, 6, Math.PI, 2 * Math.PI).lineTo(6, 4.32).quadraticCurveTo(6, 6.72, 3.6, 6.72).lineTo(-3.6, 6.72).quadraticCurveTo(-6, 6.72, -6, 4.32).closePath();
+      g.fill({ color: 0xffffff, alpha: CANDIDATE_LOOK.alpha });
+      if (eyes) {
+        g.circle(-2.3, -1.2, 1.4).fill({ color: COLOUR.boardDeep });
+        g.circle(2.3, -1.2, 1.4).fill({ color: COLOUR.boardDeep });
+      }
     } else {
+      g.tint = 0xffffff;
       g.circle(0, 0, 6).fill({ color: GHOST_LOOK.colour, alpha: GHOST_LOOK.alpha });
       for (const y of [-3, 0, 3]) {
         const half = Math.sqrt(36 - y * y);
@@ -176,9 +201,8 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
       }
       g.stroke({ width: 1.5, color: GHOST_LOOK.colour });
     }
-    look.set(g, role);
+    look.set(g, key);
   }
-
   function ensurePool(): void {
     if (pool !== null) return;
     pool = createPool<Graphics>(SPRITE_CAP, () => {
@@ -192,8 +216,8 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   }
 
   function fitCamera(input: LoadInput): void {
-    camera = createCamera({ width, height: VIEW_HEIGHT, cellPx: CELL_PX });
-    camera.setZoom(Math.min(width / (input.layout.cols * CELL_PX), VIEW_HEIGHT / (input.layout.rows * CELL_PX)));
+    camera = createCamera({ width, height: viewHeight, cellPx: CELL_PX });
+    camera.setZoom(Math.min(width / (input.layout.cols * CELL_PX), viewHeight / (input.layout.rows * CELL_PX)));
     camera.centerOn([input.layout.cols / 2, input.layout.rows / 2]);
   }
 
@@ -210,6 +234,7 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     ghostBadgeTexts = new Map([...input.stations.map((s) => s.id), 'entrance'].map((id) => [id, makeText('', 11)]));
     gateLabels = [makeText('In', 10), makeText('Out', 10)];
     layers.labels.removeChildren();
+    layers.labels.addChild(followLabel);
     layers.badges.removeChildren();
     for (const t of [...stationLabels.values(), ...gateLabels]) layers.labels.addChild(t);
     for (const t of [...badgeTexts.values(), ...ghostBadgeTexts.values()]) layers.badges.addChild(t);
@@ -218,6 +243,12 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   }
 
   const screen = (x: number, y: number): [number, number] => camera.toScreen([x, y]);
+
+  /** A label's top left corner moved the least that puts the whole label inside the canvas (a label wider than the canvas starts at 0). */
+  const keepInside = (t: Text, x: number, y: number): [number, number] => [
+    Math.max(0, Math.min(x, width - t.width)),
+    Math.max(0, Math.min(y, viewHeight - t.height)),
+  ];
 
   function drawFloor(input: LoadInput, cellScreen: number): void {
     const { layout, stations } = input;
@@ -233,7 +264,7 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
       const [sx, sy] = screen(0, y);
       g.moveTo(sx, sy).lineTo(sx + layout.cols * cellScreen, sy);
     }
-    g.stroke({ width: 1, color: COLOUR.line, alpha: 0.6 });
+    g.stroke({ width: 1, color: COLOUR.line, alpha: 0.07 });
     for (const [bx, by] of layout.blockedCells) {
       const [sx, sy] = screen(bx, by);
       g.rect(sx, sy, cellScreen, cellScreen).fill({ color: COLOUR.blocked });
@@ -245,16 +276,16 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
       const t = gateLabels[label];
       if (t !== undefined) {
         t.visible = true;
-        t.position.set(sx + 2, sy + 2);
+        t.position.set(...keepInside(t, sx + 2, sy + 2));
       }
     }
     for (const s of stations) {
       const [sx, sy] = screen(s.cell[0], s.cell[1]);
-      g.rect(sx, sy, cellScreen, cellScreen).fill({ color: COLOUR.candidate, alpha: 0.3 }).stroke({ width: 2, color: COLOUR.candidate });
+      g.rect(sx, sy, cellScreen, cellScreen).fill({ color: COLOUR.ink, alpha: 0.1 }).stroke({ width: 2, color: COLOUR.ink });
       const t = stationLabels.get(s.id);
       if (t !== undefined) {
         t.visible = true;
-        t.position.set(sx, sy - 14);
+        t.position.set(...keepInside(t, sx, sy - 14));
       }
     }
   }
@@ -269,6 +300,14 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     }
     if (a.phase === 'in-service') return [a.position[0] + 0.25 + 0.1 * ((a.server ?? 0) % 5), a.position[1] + 0.5];
     return [a.position[0] + 0.5, a.position[1] + 0.5];
+  }
+
+  let maxWaitCache: { index: unknown; ms: number } | null = null;
+  /** The longest wait of the loaded run, the far end of the wait ramp; computed once per loaded trace. */
+  function maxWaitFor(index: Parameters<typeof longestWaitMs>[0] | null): number {
+    if (index === null) return 0;
+    if (maxWaitCache === null || maxWaitCache.index !== index) maxWaitCache = { index, ms: longestWaitMs(index) };
+    return maxWaitCache.ms;
   }
 
   function draw(): void {
@@ -320,27 +359,33 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     const slots = (pool as Pool<Graphics>).sync([...drawn.map((a) => a.id), ...ghostDrawn.map((a) => ghostKey(a.id))]);
     for (const g of sprites) g.visible = false;
     screenOf.clear();
-    const radius = Math.max(0.25, (cellScreen * 0.3) / 6);
+    // A ghost is 12 units wide; its size on screen follows the cell size. Eyes only when it is large enough to show them.
+    const size = ghostSize(cellScreen);
+    const scale = size / 12;
+    const eyes = size >= EYES_FROM_PX;
+    const maxWait = maxWaitFor(state.index);
     // The baseline is translucent and dashed-outlined, so an overlap with a candidate sprite stays readable.
     const ghostStations = state.ghostStations ?? input.stations;
     for (const a of ghostDrawn) {
       const g = slots.get(ghostKey(a.id));
       if (g === undefined) continue;
       paint(g, 'baseline');
+      g.tint = 0xffffff;
       const [px, py] = spritePosition(ghostStations, a);
       const [sx, sy] = screen(px, py);
       g.position.set(sx, sy);
-      g.scale.set(radius);
+      g.scale.set(Math.max(0.25, (cellScreen * 0.3) / 6));
       g.visible = true;
     }
     for (const a of drawn) {
       const g = slots.get(a.id);
       if (g === undefined) continue;
-      paint(g, 'candidate');
+      paint(g, 'candidate', eyes);
+      g.tint = waitColour(state.index === null ? 0 : waitedMsAt(state.index, a.id, clock.ms), maxWait);
       const [px, py] = spritePosition(input.stations, a);
       const [sx, sy] = screen(px, py);
       g.position.set(sx, sy);
-      g.scale.set(radius);
+      g.scale.set(scale);
       g.visible = true;
       screenOf.set(a.id, [sx, sy]);
     }
@@ -379,9 +424,18 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
         o.rect(sx - 2, sy - 2, cellScreen + 4, cellScreen + 4).stroke({ width: 3, color: COLOUR.focus });
       }
     }
+    followLabel.visible = false;
     if (state.follow !== null) {
       const at = screenOf.get(state.follow);
-      if (at !== undefined) o.circle(at[0], at[1], Math.max(9, cellScreen * 0.6)).stroke({ width: 2, color: COLOUR.ink, alpha: 0.9 });
+      if (at !== undefined) {
+        // A board-coloured gap, then a chalk ring, and the id in chalk above it.
+        const ring = Math.max(9, size * 0.8);
+        o.circle(at[0], at[1], ring).stroke({ width: 4, color: COLOUR.board });
+        o.circle(at[0], at[1], ring + 3).stroke({ width: 2, color: COLOUR.ink });
+        if (followLabel.text !== state.follow) followLabel.text = state.follow;
+        followLabel.position.set(at[0] - followLabel.width / 2, at[1] - ring - 3 - followLabel.height - 2);
+        followLabel.visible = true;
+      }
     }
   }
 
@@ -420,10 +474,11 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
   const unsubscribe = core.onChange(syncTicker);
   const onVisibility = (): void => syncTicker();
   const onResize = (): void => {
-    const next = Math.max(320, opts.container.clientWidth || width);
+    const next = Math.max(240, opts.container.clientWidth || width);
     if (next === width) return;
     width = next;
-    app.renderer.resize(width, VIEW_HEIGHT);
+    viewHeight = viewHeightFor(width);
+    app.renderer.resize(width, viewHeight);
     const input = core.state().input;
     if (input !== null) fitCamera(input);
     syncTicker();
@@ -457,13 +512,21 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
     if (input === null) return null;
     const at = (cell: readonly number[]): [number, number] => screen((cell[0] as number) + 0.5, (cell[1] as number) + 0.5);
     return {
-      canvas: { width, height: VIEW_HEIGHT },
+      canvas: { width, height: viewHeight },
       cellPx: CELL_PX * camera.zoom,
       entrance: at(input.layout.entrance),
       exit: at(input.layout.exit),
       stations: Object.fromEntries(input.stations.map((s) => [s.id, at(s.cell)])),
     };
   };
+
+  /** Test aid: the canvas size and the bounds, in canvas CSS px, of every visible station label and of the entrance and exit labels. */
+  const labelBounds = (): Record<string, unknown> => ({
+    canvas: { width, height: viewHeight },
+    labels: [...stationLabels.values(), ...gateLabels]
+      .filter((t) => t.visible)
+      .map((t) => ({ text: t.text, left: t.x, top: t.y, right: t.x + t.width, bottom: t.y + t.height })),
+  });
 
   const guard = (): void => {
     if (destroyed) throw new Error('Game view destroyed');
@@ -514,6 +577,7 @@ function buildHandle(PIXI: typeof import('pixi.js'), app: Application, core: Rep
         framesLast2s: frames.length,
         rendererStatus: 'ready',
         projection: projection(state.input),
+        labelBounds: labelBounds(),
       };
     },
     destroy() {
