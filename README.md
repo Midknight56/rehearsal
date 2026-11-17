@@ -6,6 +6,8 @@ It stitches together a chimera of technologies that do not usually meet: a sprea
 
 Category: Frankenstein.
 
+Video: https://youtu.be/uZS-yUdA6-I
+
 ## Judging criteria at a glance
 
 **Potential Impact.** Volunteers who run a community fair, a school open day or a registration desk guess at staffing and find out on the day, with a line out the door. Rehearsal lets them type or import their arrivals and stations, see the line form, and test a change first. On the bundled Harbor Hall example, one more desk at check in cuts the mean queue wait by 297.4 s over 30 paired runs, and all 30 runs improve. It runs in the browser with no account. A keyboard journey test walks the main path with no mouse, the replay has a reduced motion mode, and body text contrast is 10.47:1 (printed by `tests/ui/styles.test.ts`, which needs 4.5:1).
