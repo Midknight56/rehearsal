@@ -28,7 +28,7 @@ async function finish(page: Page, segment: Segment, startedAt: number): Promise<
 }
 
 async function compareFair(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Compare', exact: true }).click();
+  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
   await page.getByTestId('pick-baseline-baseline').click();
   await page.getByTestId('pick-candidate-plus-one-checkin').click();
   await page.getByTestId('run-comparison').click();

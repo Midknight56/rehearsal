@@ -5,8 +5,8 @@ import { gameDebug, openFair } from './helpers';
 
 // The steps and assertions of the `Playwright journeys` table of paired-comparison-and-release/design.md, row compare.spec.ts.
 async function openCompare(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Compare', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Back to plan' })).toBeVisible();
+  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' })).toBeVisible();
 }
 
 async function runComparison(page: Page): Promise<void> {
@@ -43,7 +43,7 @@ test('compare: change list, cards, replay label, ghost legend, replicate 7, a po
   await expect(page.getByTestId('compare-status')).toHaveText(COMPLETE_TEXT);
 
   // The candidate's doors count becomes 130: the populations differ.
-  await page.getByRole('button', { name: 'Back to plan' }).click();
+  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' }).click();
   await page.getByTestId('scenario-tab-plus-one-checkin').click();
   await page.getByLabel('count of doors').fill('130');
   await page.getByLabel('count of doors').press('Enter');
@@ -54,7 +54,7 @@ test('compare: change list, cards, replay label, ghost legend, replicate 7, a po
   await expect(page.getByTestId('metric-card-queueWait.mean').locator('[data-field=runs]')).toContainText('the attendee populations differ (120 vs 130 people)');
 
   // An edit of the baseline's check-in servers makes the result stale.
-  await page.getByRole('button', { name: 'Back to plan' }).click();
+  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' }).click();
   await page.getByTestId('scenario-tab-baseline').click();
   await page.getByLabel('servers of checkin').fill('3');
   await page.getByLabel('servers of checkin').press('Enter');

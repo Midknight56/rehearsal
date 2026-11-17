@@ -165,7 +165,7 @@ describe('8.1, 8.3, 8.4, 8.6 the Print screen', () => {
     await ready(store);
     act(() => store.dispatch({ type: 'screen/set', screen: 'print' }));
     renderWith(store, (s) => <PrintScreen store={s} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Back to plan' }));
+    fireEvent.click(within(screen.getByRole('group', { name: 'Screen buttons' })).getByRole('button', { name: 'Back to plan' }));
     expect(store.getState().screen).toBe('plan');
   });
 

@@ -9,10 +9,10 @@ export const ZOOM_STEP = 1.25;
 
 export const clampZoom = (zoom: number): number => Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
 
-/** The zoom that fits the whole grid into a viewport; 1 when the viewport has no size yet. */
+/** The zoom that fits the whole grid into a viewport (below the 50% of the zoom buttons when a large grid needs it, so the grid is never cut off); 1 when the viewport has no size yet. */
 export function fitZoom(cols: number, rows: number, viewportW: number, viewportH: number): number {
   if (viewportW <= 0 || viewportH <= 0) return 1;
-  return clampZoom(Math.min(viewportW / (cols * CELL_UNITS), viewportH / (rows * CELL_UNITS)));
+  return Math.min(MAX_ZOOM, Math.max(0.1, Math.min(viewportW / (cols * CELL_UNITS), viewportH / (rows * CELL_UNITS))));
 }
 
 /** The scroll offsets that keep the grid point under `pointer` (viewport pixels) fixed when the zoom changes. */

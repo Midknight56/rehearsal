@@ -35,7 +35,7 @@ export function PrintScreen({ store }: { store: EditorStore }): ReactElement {
 
   return (
     <>
-    <TopBar>
+    <TopBar store={store}>
       <button type="button" onClick={back}>Back to plan</button>
     </TopBar>
     <main className="print-screen">

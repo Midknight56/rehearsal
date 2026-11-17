@@ -117,25 +117,45 @@ p {
   color: var(--ink);
 }
 
+/* The tab bar: four tabs in the 72 px top bar; 17 px 600; the current tab is chalk with a 3 px pumpkin rule below. */
+.screen-tabs {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  gap: 8px;
+  margin-bottom: -8px;
+}
+
+.screen-tabs button {
+  min-height: 64px;
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-muted);
+  font: 600 17px/1.2 var(--font-ui);
+  white-space: nowrap;
+}
+
+.screen-tabs button:hover {
+  background: rgba(242, 239, 230, 0.06);
+  color: var(--ink);
+}
+
+.screen-tabs button[aria-current="page"] {
+  color: var(--ink);
+  border-bottom-color: var(--pumpkin);
+}
+
+/* The buttons each screen already had (Compare, Print run sheet, Back to plan), on the right of the bar. */
 .topnav {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 16px;
+  gap: 8px 16px;
+  margin-left: auto;
 }
-
-.topnav button {
-  border: 0;
-  border-bottom: 3px solid transparent;
-  border-radius: 0;
-  padding: 0 4px;
-  font-size: 17px;
-}
-
-.topnav button:hover {
-  border-bottom-color: var(--pumpkin);
-}
-
 /* Buttons: 44 px tall, chalk outline, transparent. Selected: chalk fill. Primary: pumpkin, one per screen. */
 button {
   display: inline-flex;
@@ -660,6 +680,50 @@ dialog::backdrop {
     gap: 4px 16px;
   }
 
+  /* The tab bar is 64 px at the bottom: four equal tabs, 13 px 600, the current one with a 3 px pumpkin rule on top. */
+  .screen-tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    height: 64px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    background: var(--board-deep);
+    border-top: 1px solid var(--card-border);
+  }
+
+  .screen-tabs button {
+    min-height: 64px;
+    padding: 0 4px;
+    font-size: 13px;
+    border-bottom: 0;
+    border-top: 3px solid transparent;
+  }
+
+  .screen-tabs button[aria-current="page"] {
+    border-bottom-color: transparent;
+    border-top-color: var(--pumpkin);
+  }
+
+  /* The page ends above the bar, so the bar covers nothing. */
+  #root {
+    padding-bottom: 64px;
+  }
+
+  /* The floor runs between the 16 px page edges (328 px at 360 px wide), as the design draws it. */
+  .game-view.panel .game-wrapper {
+    max-width: none;
+    margin-left: -26px;
+    margin-right: -26px;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+
   #status {
     padding: 8px 16px;
   }
@@ -791,6 +855,19 @@ dialog::backdrop {
   stroke-linecap: round;
 }
 
+/* The line lane: a dashed pumpkin outline where the queue forms. */
+.floorplan .lane rect {
+  fill: rgba(255, 154, 61, 0.09);
+  stroke: var(--pumpkin);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+
+.floorplan .lane text {
+  fill: var(--pumpkin);
+  font: 600 7px var(--font-ui);
+}
+
 .floorplan .cursor {
   fill: none;
   stroke: var(--focus);
@@ -804,7 +881,7 @@ dialog::backdrop {
 /* Game view: the canvas sits in a focusable wrapper; controls, timeline and inspector are ordinary DOM. */
 .game-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 30%);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 480px);
   gap: 24px;
   align-items: start;
 }

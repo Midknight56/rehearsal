@@ -4,19 +4,24 @@
 import { useEffect } from 'react';
 
 let pending = false;
+let toTop = false;
 
 /** Call when a control changes the screen; the screen that mounts next focuses its heading. */
-export function requestHeadingFocus(): void {
+export function requestHeadingFocus(scrollToTop = false): void {
   pending = true;
+  toTop = scrollToTop;
 }
 
 export function useHeadingFocus(): void {
   useEffect(() => {
     if (!pending) return;
     pending = false;
+    const top = toTop;
+    toTop = false;
+    if (top) window.scrollTo(0, 0);
     const heading = document.querySelector<HTMLElement>('main h1');
     if (heading === null) return;
     if (!heading.hasAttribute('tabindex')) heading.setAttribute('tabindex', '-1');
-    heading.focus();
+    heading.focus({ preventScroll: top });
   }, []);
 }

@@ -12,7 +12,7 @@ const TABS = [
 ] as const;
 
 const openPrint = async (page: Page): Promise<void> => {
-  await page.getByRole('button', { name: 'Print run sheet' }).click();
+  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Print run sheet' }).click();
   await expect(page.locator('#run-sheet')).toBeVisible();
 };
 
@@ -53,7 +53,7 @@ test.describe('8.1 to 8.3 the Print screen', () => {
     await openPrint(page);
     await page.getByRole('button', { name: 'Print', exact: true }).click();
     expect(await page.evaluate(() => (window as unknown as { __printCalls: number }).__printCalls)).toBe(1);
-    await page.getByRole('button', { name: 'Back to plan' }).click();
+    await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' }).click();
     await expect(page.getByRole('heading', { name: 'Harbor Hall Community Fair: baseline' })).toBeVisible();
   });
 });
@@ -93,7 +93,7 @@ test.describe('8.6 no run needed, stale only on the results line, blocked route'
     await openPrint(page);
     await expect(page.getByTestId('run-sheet-results')).toContainText('replication 0');
     await expect(page.getByTestId('run-sheet-results')).not.toContainText(STALE_LABEL);
-    await page.getByRole('button', { name: 'Back to plan' }).click();
+    await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' }).click();
     await page.getByLabel('servers of checkin').fill('2');
     await page.getByLabel('servers of checkin').press('Enter');
     await openPrint(page);
@@ -110,7 +110,7 @@ test.describe('8.6 no run needed, stale only on the results line, blocked route'
       await page.getByLabel('Blocked cell y').fill(String(y));
       await page.getByRole('button', { name: 'Add cell' }).click();
     }
-    const button = page.getByRole('button', { name: 'Print run sheet' });
+    const button = page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Print run sheet' });
     await expect(button).toHaveAttribute('aria-disabled', 'true');
     const message = 'Run blocked: no path from Check-in desk (checkin) to Welcome packs (packs). Clear a corridor on the floor plan or move a station.';
     await expect(page.getByText(message).first()).toBeVisible();

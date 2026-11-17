@@ -21,6 +21,7 @@ import { QueueInspector } from './QueueInspector';
 import { WaitingChart } from './WaitingChart';
 import { waitingPerMinute } from '../../replay/waitingSeries';
 import { onRestartRequest, registerView, unavailableView } from './viewRegistry';
+import { focusGameViewSection, takePendingGameViewFocus } from '../navigation';
 
 export const GAME_KEY_HELP = 'Space plays or pauses, ArrowLeft and ArrowRight step one second, F follows the selected attendee, Escape releases, Tab leaves the game view.';
 export const LEGEND = 'Line colour shows simulated waiting, not measured crowd density.';
@@ -76,6 +77,12 @@ export function GameViewPanel({ store, createView = createGameView, ghost }: Pro
   // The heading appears once the trace is loaded into the view, so everything below it is in place when it shows.
   const ready = result === null || result.result.trace === undefined || loadedFor === result.result;
 
+  // The Game view tab opened the Plan screen with a run: once the heading is in the page, focus and scroll go to it.
+  useEffect(() => {
+    if (ghost !== undefined || !ready || result === null) return;
+    if (takePendingGameViewFocus()) focusGameViewSection(store);
+  }, [ghost, ready, result, store]);
+
   // Create the view when the panel mounts, so it is ready before a run finishes; destroy it on unmount. A new generation restarts it.
   useEffect(() => {
     if (containerRef.current === null) return undefined;
@@ -85,6 +92,7 @@ export function GameViewPanel({ store, createView = createGameView, ghost }: Pro
     void createView({
       container: containerRef.current,
       reducedMotion: reducedRef.current,
+      isReducedMotion: () => reducedRef.current,
       test: import.meta.env.VITE_REHEARSAL_TEST === '1',
       dpr: window.devicePixelRatio || 1,
     }).then((created) => {

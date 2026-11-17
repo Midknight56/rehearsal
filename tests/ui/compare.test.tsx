@@ -74,7 +74,7 @@ describe('12.1 the screen and its picks', () => {
       expect(screen.getByTestId(`pick-baseline-${key}`)).toBeTruthy();
       expect(screen.getByTestId(`pick-candidate-${key}`)).toBeTruthy();
     }
-    expect(screen.getByRole('button', { name: 'Back to plan' })).toBeTruthy();
+    expect(within(screen.getByRole('group', { name: 'Screen buttons' })).getByRole('button', { name: 'Back to plan' })).toBeTruthy();
   });
 
   it('keeps run-comparison focusable with aria-disabled while the picks are equal', async () => {

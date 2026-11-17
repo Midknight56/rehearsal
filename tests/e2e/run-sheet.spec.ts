@@ -15,8 +15,8 @@ for (const tab of TABS) {
   test(`open-run-sheet for ${tab.key}: the numbers, one page under print media and a Letter and an A4 PDF`, async ({ page, context }) => {
     await openFair(page);
     await page.getByTestId(`scenario-tab-${tab.key}`).click();
-    await page.getByRole('button', { name: 'Compare', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Back to plan' })).toBeVisible();
+    await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+    await expect(page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' })).toBeVisible();
     const [sheet] = await Promise.all([context.waitForEvent('page'), page.getByTestId('open-run-sheet').click()]);
     await sheet.waitForLoadState();
     for (const text of tab.texts) await expect(sheet.locator('body')).toContainText(text);

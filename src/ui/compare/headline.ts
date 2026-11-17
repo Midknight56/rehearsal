@@ -29,3 +29,10 @@ export function compareHeadline(metric: HeadlineMetric): Headline | null {
     note,
   };
 }
+
+/** The sentence around its first number, for the count up: `Mean queue wait drops by 297.4 s.` gives `297.4` between the words. */
+export function splitHeadlineNumber(text: string): { before: string; number: string; after: string } | null {
+  const m = /\d[\d,]*(?:\.\d+)?/.exec(text);
+  if (m === null) return null;
+  return { before: text.slice(0, m.index), number: m[0], after: text.slice(m.index + m[0].length) };
+}

@@ -13,8 +13,8 @@ const HOSTILE = 'tests/comparison/fixtures/hostile.json';
 const dialog = (page: Page) => page.getByRole('dialog', { name: 'Review the scenario file' });
 
 async function openCompare(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Compare', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Back to plan' })).toBeVisible();
+  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' })).toBeVisible();
 }
 
 async function runComparison(page: Page, baseline: string, candidate: string): Promise<void> {
@@ -76,7 +76,7 @@ test('Harbor Hall: JSON re-import, CSVs, workbook round trip, printable comparis
   await printable.close();
 
   // Scenario JSON re-import: the preview shows the hash of scenario-hash-baseline and applies without error.
-  await page.getByRole('button', { name: 'Back to plan' }).click();
+  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' }).click();
   await page.getByTestId('import-json').setInputFiles(json.file);
   await expect(dialog(page)).toContainText(`hash ${baselineHash.slice(0, 8)}, model 0.1.0`);
   await dialog(page).getByRole('button', { name: 'Open', exact: true }).click();

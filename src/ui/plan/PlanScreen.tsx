@@ -15,7 +15,8 @@ import { ResultTables } from '../results/ResultTables';
 import { RunPanel } from '../run/RunPanel';
 import type { RunController } from '../run/controller';
 import { createPrefsStore, type Prefs } from '../../storage/prefs';
-import { requestHeadingFocus, useHeadingFocus } from '../focus';
+import { useHeadingFocus } from '../focus';
+import { focusSimulate, openCompare, takePendingGameViewFocus } from '../navigation';
 import { OpenJson } from '../import/OpenJson';
 import type { SavedScenarios } from '../saved';
 import { SaveBar } from '../SaveBar';
@@ -26,6 +27,14 @@ import { TopBar } from '../TopBar';
 export function PlanScreen({ store, controller, saved }: { store: EditorStore; controller: RunController; saved?: SavedScenarios }): ReactElement {
   const state = useEditorState(store);
   useHeadingFocus();
+  // Opened by the Game view tab with no run: the section is only the Simulate button, so focus goes there. With a run, the game view panel moves focus to its own heading once it has loaded the trace.
+  useEffect(() => {
+    const s = store.getState();
+    const stored = s.results[s.currentIndex];
+    if (stored === undefined || stored.status === 'none') {
+      if (takePendingGameViewFocus()) focusSimulate();
+    }
+  }, [store]);
   const canUndo = (state.past[state.currentIndex]?.length ?? 0) > 0;
   const canRedo = (state.future[state.currentIndex]?.length ?? 0) > 0;
 
@@ -56,8 +65,8 @@ export function PlanScreen({ store, controller, saved }: { store: EditorStore; c
 
   return (
     <>
-    <TopBar>
-      <button type="button" onClick={() => { requestHeadingFocus(); store.dispatch({ type: 'screen/set', screen: 'compare' }); }}>Compare</button>
+    <TopBar store={store}>
+      <button type="button" onClick={() => openCompare(store)}>Compare</button>
       <PrintControls store={store} part="sheet" />
     </TopBar>
     <main>

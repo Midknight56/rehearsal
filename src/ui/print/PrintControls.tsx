@@ -24,18 +24,23 @@ export async function exportCurrentWorkbook(store: EditorStore): Promise<void> {
   }
 }
 
+/** Opens the run sheet, or says why it cannot be opened: the Print run sheet button and the Run sheet tab both do this. */
+export function openRunSheet(store: EditorStore): void {
+  const { scenario } = store.getState();
+  const blocked = blockedMessage(scenario, createPathCache(scenario).unreachable);
+  if (blocked !== null) {
+    store.setStatus(blocked);
+    return;
+  }
+  requestHeadingFocus();
+  store.dispatch({ type: 'screen/set', screen: 'print' });
+}
+
 /** sheet is the Print run sheet button (it sits in the top bar), workbook is Export workbook; both by default. */
 export function PrintControls({ store, part }: { store: EditorStore; part?: 'sheet' | 'workbook' }): ReactElement {
   const { scenario } = useEditorState(store);
   const blocked = useMemo(() => blockedMessage(scenario, createPathCache(scenario).unreachable), [scenario]);
-  const open = (): void => {
-    if (blocked !== null) {
-      store.setStatus(blocked);
-      return;
-    }
-    requestHeadingFocus();
-    store.dispatch({ type: 'screen/set', screen: 'print' });
-  };
+  const open = (): void => openRunSheet(store);
   return (
     <>
       {part === 'workbook' ? null : <button type="button" aria-disabled={blocked === null ? undefined : 'true'} onClick={open}>Print run sheet</button>}

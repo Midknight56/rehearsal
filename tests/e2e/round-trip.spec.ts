@@ -64,7 +64,7 @@ test.describe('8.5 print half: identical numbers through the parts that exist', 
       expect(walked, timeline).not.toBeNull();
       const timelineMs = Number(walked![1]) * 60_000 + Number(walked![2]) * 1000 + Number(walked![3]);
 
-      await page.getByRole('button', { name: 'Print run sheet' }).click();
+      await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Print run sheet' }).click();
       const sheet = page.locator('#run-sheet');
       await expect(sheet).toBeVisible();
       for (const text of [...c.seconds, c.hours, `Scenario hash: ${hash}`]) await expect(sheet).toContainText(text);

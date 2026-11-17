@@ -21,6 +21,8 @@ import { ReplicateSelect } from './ReplicateSelect';
 import { StationTable } from './StationTable';
 import { SlopeChart, type SlopePair } from './SlopeChart';
 import { compareHeadline } from './headline';
+import { CountUpSentence } from './CountUpSentence';
+import { isReducedMotion } from '../game/motion';
 import { NoBreak } from '../noBreak';
 import { TopBar } from '../TopBar';
 import type { CompareController } from './controller';
@@ -90,7 +92,7 @@ export function CompareScreen({ store, controller, storage, saved: savedProp, cr
 
   return (
     <>
-    <TopBar>
+    <TopBar store={store}>
       <button type="button" onClick={() => { requestHeadingFocus(); store.dispatch({ type: 'screen/set', screen: 'plan' }); }}>Back to plan</button>
     </TopBar>
     <main className="compare">
@@ -127,7 +129,7 @@ export function CompareScreen({ store, controller, storage, saved: savedProp, cr
             {headline === null ? null : (
               <section className="headline" aria-label="Headline" data-testid="compare-headline">
                 {isCompareStale(state) ? <p><strong>{STALE_TEXT}</strong></p> : null}
-                <p className="headline-text"><NoBreak text={headline.headline} /></p>
+                <CountUpSentence text={headline.headline} reduced={isReducedMotion(state.prefs)} className="headline-text" />
                 {headline.detail === null ? null : <p className="headline-detail" data-testid="compare-headline-detail"><NoBreak text={headline.detail} /></p>}
                 {headline.note === null ? null : <p className="muted">{headline.note}</p>}
               </section>

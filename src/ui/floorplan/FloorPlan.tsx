@@ -10,6 +10,8 @@ import { routeSegments } from './routes';
 
 /** Fit may use this share of the window height (the wrapper's max-height in app.css), so a wide grid fills the width. */
 const FIT_HEIGHT_SHARE = 0.85;
+/** The lane east of a station: ten queue slots 0.7 cell apart, as the game view lays them out. */
+const LANE_CELLS = 9 * 0.7 + 1;
 
 export const FLOOR_PLAN_KEY_HELP =
   'Arrow keys move the selected station or the cell cursor, Space toggles a blocked cell, E sets the entrance, X sets the exit, Escape clears the selection, Tab leaves the floor plan.';
@@ -28,9 +30,9 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
   const width = layout.cols * CELL_UNITS;
   const height = layout.rows * CELL_UNITS;
 
-  const changeZoom = (next: number, pointer?: { x: number; y: number }): void => {
+  const changeZoom = (next: number, pointer?: { x: number; y: number }, exact = false): void => {
     const el = wrapperRef.current;
-    const target = clampZoom(next);
+    const target = exact ? next : clampZoom(next);
     if (target === zoom) return;
     if (el !== null) {
       const at = pointer ?? { x: el.clientWidth / 2, y: el.clientHeight / 2 };
@@ -138,7 +140,7 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
           type="button"
           onClick={() => {
             const el = wrapperRef.current;
-            changeZoom(el === null ? 1 : fitZoom(layout.cols, layout.rows, el.clientWidth, window.innerHeight * FIT_HEIGHT_SHARE));
+            changeZoom(el === null ? 1 : fitZoom(layout.cols, layout.rows, el.clientWidth, window.innerHeight * FIT_HEIGHT_SHARE), undefined, true);
           }}
         >
           Fit
@@ -172,16 +174,37 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
               <rect width="6" height="6" className="hatch-ground" />
               <line x1="0" y1="0" x2="0" y2="6" className="hatch-line" />
             </pattern>
+            {/* Chalk: a noise mask on the strokes only (gates, markers, routes), never on text. The noise is drawn here, not in a stylesheet. */}
+            <filter id="chalk-rough" filterUnits="userSpaceOnUse" x="0" y="0" width={width} height={height}>
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="3" result="noise" />
+              <feColorMatrix in="noise" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 5 -1" result="mask" />
+              <feComposite in="SourceGraphic" in2="mask" operator="in" />
+            </filter>
           </defs>
           {cells}
+          {/* The line lane: where the queue forms east of each station (the game view's queue slots), a dashed pumpkin outline. */}
+          <g pointerEvents="none" data-role="lanes">
+            {scenario.stations.map((station) => {
+              const left = station.cell[0] + 1;
+              const laneW = Math.min(layout.cols, left + LANE_CELLS) - left;
+              if (laneW <= 0) return null;
+              const o = cellOrigin(drag !== null && drag.stationId === station.id ? drag.current : station.cell);
+              return (
+                <g key={station.id} className="lane" data-lane={station.id}>
+                  <rect x={o.x + CELL_UNITS} y={o.y + 1} width={laneW * CELL_UNITS} height={CELL_UNITS - 2} rx="6" />
+                  <text x={o.x + CELL_UNITS + 5} y={o.y + CELL_UNITS / 2 + 3}>the line forms here</text>
+                </g>
+              );
+            })}
+          </g>
           <g data-role="entrance" pointerEvents="none">
             <title>{`Entrance (${layout.entrance[0]}, ${layout.entrance[1]})`}</title>
-            <rect className="gate" x={entrance.x} y={entrance.y} width={CELL_UNITS} height={CELL_UNITS} />
+            <rect className="gate" filter="url(#chalk-rough)" x={entrance.x} y={entrance.y} width={CELL_UNITS} height={CELL_UNITS} />
             <text className="gate-text" x={entrance.x + CELL_UNITS / 2} y={entrance.y + 11} textAnchor="middle">In</text>
           </g>
           <g data-role="exit" pointerEvents="none">
             <title>{`Exit (${layout.exit[0]}, ${layout.exit[1]})`}</title>
-            <rect className="gate" x={exit.x} y={exit.y} width={CELL_UNITS} height={CELL_UNITS} />
+            <rect className="gate" filter="url(#chalk-rough)" x={exit.x} y={exit.y} width={CELL_UNITS} height={CELL_UNITS} />
             <text className="gate-text" x={exit.x + CELL_UNITS / 2} y={exit.y + 11} textAnchor="middle">Out</text>
           </g>
           <g pointerEvents="none">
@@ -191,7 +214,7 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
                 const b = cellCentre(segment.toCell);
                 return (
                   <g key={i} className="route no-path">
-                    <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} strokeDasharray="4 3" />
+                    <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} strokeDasharray="4 3" filter="url(#chalk-rough)" />
                     <text className="route-label" x={(a.x + b.x) / 2} y={(a.y + b.y) / 2 - 3} textAnchor="middle">{segment.label}</text>
                   </g>
                 );
@@ -203,7 +226,7 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
               const mid = cellCentre(segment.cells[Math.floor(segment.cells.length / 2)] as [number, number]);
               return (
                 <g key={i} className="route">
-                  <polyline points={points.join(' ')} fill="none" />
+                  <polyline points={points.join(' ')} fill="none" filter="url(#chalk-rough)" />
                   <text className="route-label" x={mid.x} y={mid.y - 4} textAnchor="middle">{segment.label}</text>
                 </g>
               );
@@ -225,7 +248,7 @@ export function FloorPlan({ store }: { store: EditorStore }): ReactElement {
                 pointerEvents={dragged ? 'none' : undefined}
                 onPointerDown={handlers.onMarkerPointerDown}
               >
-                <rect x={origin.x + 1} y={origin.y + 1} width={CELL_UNITS - 2} height={CELL_UNITS - 2} rx="3" />
+                <rect x={origin.x + 1} y={origin.y + 1} width={CELL_UNITS - 2} height={CELL_UNITS - 2} rx="3" filter="url(#chalk-rough)" />
                 <text x={origin.x + CELL_UNITS / 2} y={origin.y + 11} textAnchor="middle" className="marker-glyph">{station.servers}</text>
                 <text x={origin.x + CELL_UNITS / 2} y={origin.y - 2} textAnchor="middle" className="marker-label">{station.label}</text>
               </g>
