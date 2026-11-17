@@ -73,14 +73,15 @@ export function PlanScreen({ store, controller }: { store: EditorStore; controll
           <section className="panel" aria-label="Stations"><StationsTable store={store} /></section>
         </div>
         <div>
+          {/* After the tables in DOM and Tab order, beside them on screen, so a drag starts in the first viewport. */}
+          <section className="panel" aria-labelledby="floor-plan-heading">
+            <h2 id="floor-plan-heading">Floor plan</h2>
+            <FloorPlan store={store} />
+          </section>
           <section className="panel" aria-label="Layout"><LayoutPanel store={store} /></section>
           <section className="panel" aria-label="Assumptions"><AssumptionsPanel store={store} /></section>
         </div>
       </div>
-      <section className="panel" aria-labelledby="floor-plan-heading">
-        <h2 id="floor-plan-heading">Floor plan</h2>
-        <FloorPlan store={store} />
-      </section>
       <section className="panel" aria-label="Run and results">
         <RunPanel store={store} controller={controller} />
         <GameViewPanel store={store} />

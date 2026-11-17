@@ -37,7 +37,13 @@ export async function keyboardJourney(page: Page): Promise<void> {
   await expect(page.getByRole('status')).toContainText('Run complete', { timeout: 60_000 });
 
   await tabTo(page, 'Game view', { checkFocus: true });
+  const reduced = await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
   await page.keyboard.press('Space');
+  if (reduced) {
+    // 9.4: the result loaded paused, so the first Space starts playback and the second returns to Play.
+    await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+    await page.keyboard.press('Space');
+  }
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
   const readout = page.getByText(/^\d\d:\d\d \/ \d\d:\d\d$/);
   const before = ((await readout.textContent()) ?? '').slice(0, 5);

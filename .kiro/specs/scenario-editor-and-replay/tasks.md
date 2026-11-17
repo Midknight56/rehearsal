@@ -107,7 +107,7 @@ Every task ends with its `Verify:` line passing and one `docs/kiro-log.md` row t
   - _Requirements: 9.4, 10.3, 10.4, 10.6_
   - _Owner: kiro_
 
-- [ ] 13. Accessibility suite: keyboard journey, reduced motion, network, viewports and injection
+- [x] 13. Accessibility suite: keyboard journey, reduced motion, network, viewports and injection
   - Fill `tests/e2e/keyboard-journey.spec.ts` with the steps of 9.3 up to `Follow released.` (task 19 adds the Compare and export steps), the assertions after each step, the accessible names and patterns of 9.1, `assertFocusVisibleAndUnobscured` after every Tab and the viewports of 9.8; `tests/e2e/reduced-motion.spec.ts` (9.4 with the media query emulated and again with `Motion` set to `Reduce`); `tests/e2e/network.spec.ts` (9.7); `tests/ui/no-html-injection.test.ts`; and `tests/ui/vocabulary.test.ts` (8.2, 9.5) with the six words of `.kiro/steering/model-limits.md` written in the test until task 19 replaces them by `FORBIDDEN_BADGE_WORDS`.
   - Fix every defect these tests find in the module that has it, under the two-repair rule, and name each fix in the log row.
   - Verify: `npx playwright test tests/e2e/keyboard-journey.spec.ts tests/e2e/reduced-motion.spec.ts tests/e2e/network.spec.ts` passes; `npx vitest run --config vitest.ui.config.ts tests/ui/no-html-injection.test.ts tests/ui/vocabulary.test.ts` passes; `Select-String -Path src/ui/*, src/replay/*, src/imports/*, src/storage/* -Pattern 'dangerouslySetInnerHTML|innerHTML|insertAdjacentHTML'` prints nothing (*verify* that the path list recurses; otherwise pipe `Get-ChildItem -Recurse` into `Select-String`).
