@@ -93,14 +93,14 @@ Every task ends with its `Verify:` line passing and one `docs/kiro-log.md` row t
     - _Requirements: 5.6, 6.1, 6.3, 6.5, 6.7, 6.8, 6.9_
     - _Owner: kiro_
 
-- [ ] 11. Game view panel: controls, Find attendee, follow, person timeline and queue inspector
+- [x] 11. Game view panel: controls, Find attendee, follow, person timeline and queue inspector
   - Create `src/ui/game/GameViewPanel.tsx` (header `Game view`, the subtitle `Replay of replication 0, one example run`, the `Stale — rerun` badge, the control row of 6.2 with the reduced-motion order of 9.4, the wrapper with `role="application"`, `aria-label="Game view"` and the key help, Space/ArrowLeft/ArrowRight/F/Escape handling, the legend sentence of 6.6, the cap banner of 6.4, the fallback banner of 6.8 with `Retry game view`, `load` on every new result, paused load under reduced motion), `FindAttendee.tsx` (the combobox pattern of 7.3 with the counts and the no-match text), `PersonTimeline.tsx` (`<table>` captioned `Timeline of <id>`, the rows of 7.4 from `timelineOf`) and `QueueInspector.tsx` (`<table>` captioned `<label> at mm:ss`, the lines of 7.5 from `sampleNow`, refreshed at most 10 times per second); mount `GameViewPanel` in the Plan screen below the run panel and expose `gameView()`, `forceRendererFailure` and `lastResultJson(tabKey)` (the `JSON.stringify` of that tab's `RunResult`, trace included, for the byte-identity case of 6.3) through `testHook.ts`.
   - Fill `tests/ui/game-panel.test.tsx` with `fakeGameView.ts`; fill `tests/e2e/replay.spec.ts`, `tests/e2e/follow.spec.ts` and `tests/e2e/renderer-fallback.spec.ts`.
   - Verify: `npx vitest run --config vitest.ui.config.ts tests/ui/game-panel.test.tsx` passes; `npx playwright test tests/e2e/replay.spec.ts tests/e2e/follow.spec.ts tests/e2e/renderer-fallback.spec.ts` passes, including `spritesDrawn === 1000` on `large-1200.json` at 20:00, the byte-identical trace JSON across speed and follow settings, `tickerRunning === false` while hidden, and the timeline row `Walked to Check-in desk` `(00:04.167)` for `doors#0000` (canvas cases recorded `not run` only under the headless rule of task 1); `npm run typecheck` passes.
   - _Requirements: 6.1, 6.2, 6.4, 6.5, 6.8, 6.9, 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 9.4_
   - _Owner: kiro_
 
-- [ ] 12. Saved-scenario store and preferences
+- [x] 12. Saved-scenario store and preferences
   - Create `src/storage/scenarios.ts` (`createScenarioStore(storage, { maxSaved })` with `SCENARIOS_KEY`, newest first, replace by `id`, the reasons `limit`, `unavailable` and `quota` with the error name kept, `unreadable`, `load` validating with `validateScenario`; the bound is a parameter, which task 19 sets from `SAVED_SCENARIO_LIMIT`, so this file holds no second literal) and `src/storage/prefs.ts` (`createPrefsStore`, `motion`); add the `Motion` toolbar toggle (`System`, `Reduce`, `Allow`) to the Plan screen.
   - Fill `tests/ui/storage.test.ts` (10.3, 10.4, 10.6 with an in-memory and a throwing `Storage`; P14).
   - Verify: `npx vitest run --config vitest.ui.config.ts tests/ui/storage.test.ts` passes with P14 at 200 runs; `npm run typecheck` passes.

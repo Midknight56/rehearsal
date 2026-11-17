@@ -60,6 +60,8 @@ export type EditorAction =
   | { type: 'layout/toggle-blocked'; cell: [number, number] }
   | { type: 'layout/set-entrance'; cell: [number, number] }
   | { type: 'layout/set-exit'; cell: [number, number] }
+  | { type: 'layout/unblock-and-place-entrance'; cell: [number, number] }
+  | { type: 'layout/unblock-and-place-exit'; cell: [number, number] }
   | { type: 'layout/resize'; cols: number; rows: number }
   | { type: 'settings/set'; patch: Partial<Pick<Scenario, 'title' | 'horizonMs' | 'walkSpeedMps' | 'baseSeed' | 'notes'>> }
   | { type: 'import/apply'; candidate: Scenario; sources: string[]; imported?: { cohorts: number; stations: number } }
@@ -84,4 +86,5 @@ export type EditorAction =
   | { type: 'hash/computed'; tabIndex: number; revision: number; hash: string }
   | { type: 'storage/save-failed'; reason: 'quota' | 'unavailable' | 'limit' }
   | { type: 'storage/save-ok' }
-  | { type: 'status/set'; text: string };
+  | { type: 'status/set'; text: string }
+  | { type: 'prefs/set'; prefs: Prefs };

@@ -186,6 +186,10 @@ export function refusal(state: EditorState, action: EditorAction): string | null
       return cellRefusal(s, action.cell, { allow: 'entrance' });
     case 'layout/set-exit':
       return cellRefusal(s, action.cell, { allow: 'exit' });
+    case 'layout/unblock-and-place-entrance':
+      return cellRefusal(s, action.cell, { allow: 'entrance', ignoreBlocked: true });
+    case 'layout/unblock-and-place-exit':
+      return cellRefusal(s, action.cell, { allow: 'exit', ignoreBlocked: true });
     case 'layout/resize':
       return resizeRefusal(s, action.cols, action.rows);
     case 'settings/set':
@@ -201,6 +205,7 @@ export function commits(action: EditorAction): boolean {
     case 'station/move': case 'station/set': case 'station/rename': case 'station/add': case 'station/delete':
     case 'cohort/set': case 'cohort/rename': case 'cohort/add': case 'cohort/delete':
     case 'layout/toggle-blocked': case 'layout/set-entrance': case 'layout/set-exit': case 'layout/resize':
+    case 'layout/unblock-and-place-entrance': case 'layout/unblock-and-place-exit':
     case 'settings/set': case 'import/apply': case 'scenario/open': case 'drag/end':
       return true;
     default:
@@ -334,6 +339,12 @@ export function reduce(state: EditorState, action: EditorAction): EditorState {
       return commit(state, { ...s, layout: { ...s.layout, entrance: action.cell } });
     case 'layout/set-exit':
       return commit(state, { ...s, layout: { ...s.layout, exit: action.cell } });
+    case 'layout/unblock-and-place-entrance':
+    case 'layout/unblock-and-place-exit': {
+      const blockedCells = s.layout.blockedCells.filter((b) => !(b[0] === action.cell[0] && b[1] === action.cell[1]));
+      const end = action.type === 'layout/unblock-and-place-entrance' ? { entrance: action.cell } : { exit: action.cell };
+      return commit(state, { ...s, layout: { ...s.layout, blockedCells, ...end } });
+    }
     case 'layout/resize':
       return commit(state, { ...s, layout: { ...s.layout, cols: action.cols, rows: action.rows } });
     case 'settings/set': {
@@ -415,6 +426,8 @@ export function reduce(state: EditorState, action: EditorAction): EditorState {
       return { ...state, storage: { ...state.storage, saveError: { reason: action.reason } } };
     case 'storage/save-ok':
       return { ...state, storage: { ...state.storage, saveError: null } };
+    case 'prefs/set':
+      return state.prefs.motion === action.prefs.motion ? state : { ...state, prefs: action.prefs };
     case 'status/set':
       return state.status === action.text ? state : { ...state, status: action.text };
     default:

@@ -30,6 +30,11 @@ test.describe('6.8 the canvas cannot start', () => {
     await page.getByRole('button', { name: 'Retry game view' }).click();
     await expect(page.getByText(BANNER)).toHaveCount(0);
     expect((await gameDebug(page)).rendererStatus).toBe('ready');
-    expect((await gameDebug(page)).spritesDrawn).toBeGreaterThan(0);
+    // Seek to 60,000 ms, past the first arrival at 12,208 ms, through the scrubber, as follow.spec.ts does.
+    await page.getByRole('slider', { name: 'Simulated time' }).evaluate((el: HTMLInputElement) => {
+      el.value = '60000';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await expect.poll(async () => (await gameDebug(page)).spritesDrawn).toBeGreaterThan(0);
   });
 });

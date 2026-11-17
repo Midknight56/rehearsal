@@ -14,11 +14,22 @@ import { GameViewPanel } from '../game/GameViewPanel';
 import { ResultTables } from '../results/ResultTables';
 import { RunPanel } from '../run/RunPanel';
 import type { RunController } from '../run/controller';
+import { createPrefsStore, type Prefs } from '../../storage/prefs';
 
 export function PlanScreen({ store, controller }: { store: EditorStore; controller: RunController }): ReactElement {
   const state = useEditorState(store);
   const canUndo = (state.past[state.currentIndex]?.length ?? 0) > 0;
   const canRedo = (state.future[state.currentIndex]?.length ?? 0) > 0;
+
+  const setMotion = (motion: Prefs['motion']): void => {
+    const prefs: Prefs = { version: 1, motion };
+    store.dispatch({ type: 'prefs/set', prefs });
+    try {
+      createPrefsStore(window.localStorage).write(prefs);
+    } catch {
+      createPrefsStore(null).write(prefs);
+    }
+  };
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
@@ -46,17 +57,16 @@ export function PlanScreen({ store, controller }: { store: EditorStore; controll
         {canRedo ? null : <span className="muted">Nothing to redo.</span>}
         <button type="button" onClick={() => store.dispatch({ type: 'import/open' })}>Import</button>
         <Templates />
+        <label>
+          Motion{' '}
+          <select value={state.prefs.motion} onChange={(e) => setMotion(e.target.value as Prefs['motion'])}>
+            <option value="system">System</option>
+            <option value="reduce">Reduce</option>
+            <option value="allow">Allow</option>
+          </select>
+        </label>
       </div>
       <ImportDialog store={store} />
-      <section className="panel" aria-label="Run and results">
-        <RunPanel store={store} controller={controller} />
-        <GameViewPanel store={store} />
-        <ResultTables store={store} />
-      </section>
-      <section className="panel" aria-labelledby="floor-plan-heading">
-        <h2 id="floor-plan-heading">Floor plan</h2>
-        <FloorPlan store={store} />
-      </section>
       <div className="plan-grid">
         <div>
           <section className="panel" aria-label="Arrivals"><ArrivalsTable store={store} /></section>
@@ -67,6 +77,15 @@ export function PlanScreen({ store, controller }: { store: EditorStore; controll
           <section className="panel" aria-label="Assumptions"><AssumptionsPanel store={store} /></section>
         </div>
       </div>
+      <section className="panel" aria-labelledby="floor-plan-heading">
+        <h2 id="floor-plan-heading">Floor plan</h2>
+        <FloorPlan store={store} />
+      </section>
+      <section className="panel" aria-label="Run and results">
+        <RunPanel store={store} controller={controller} />
+        <GameViewPanel store={store} />
+        <ResultTables store={store} />
+      </section>
     </main>
   );
 }

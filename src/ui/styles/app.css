@@ -184,6 +184,11 @@ td input {
   font-family: ui-monospace, Menlo, Consolas, monospace;
 }
 
+/* The sticky status bar must not cover a focused control: focus scrolling leaves room for it. */
+html {
+  scroll-padding-bottom: 4rem;
+}
+
 #status {
   position: sticky;
   bottom: 0;

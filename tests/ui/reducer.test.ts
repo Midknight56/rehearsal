@@ -91,6 +91,28 @@ describe('3.7 layout edits', () => {
     expect(refusal(state0(), { type: 'layout/set-exit', cell: [10, 12] })).toBe('Cell (10, 12) is used by Check-in desk.');
   });
 
+  it.each([['entrance', 'layout/unblock-and-place-entrance'], ['exit', 'layout/unblock-and-place-exit']] as const)(
+    'unblocks and places the %s on a blocked cell as one action and one undo entry',
+    (which, type) => {
+      const s0 = state0();
+      const s1 = reduce(s0, { type, cell: [16, 21] } as EditorAction);
+      const layout = s1.scenario.layout;
+      expect(layout[which]).toEqual([16, 21]);
+      expect(layout.blockedCells).not.toContainEqual([16, 21]);
+      expect(layout.blockedCells).toHaveLength(s0.scenario.layout.blockedCells.length - 1);
+      expect(s1.scenario.revision).toBe(s0.scenario.revision + 1);
+      expect(s1.past[0]).toHaveLength(s0.past[0]!.length + 1);
+      const u = reduce(s1, { type: 'undo' });
+      expect(u.scenario.layout.blockedCells).toContainEqual([16, 21]);
+      expect(u.scenario.layout[which]).toEqual(s0.scenario.layout[which]);
+    },
+  );
+
+  it('the combined action still refuses a cell that is outside the grid, a station cell or the other end', () => {
+    expect(refusal(state0(), { type: 'layout/unblock-and-place-entrance', cell: [10, 12] })).toBe('Cell (10, 12) is used by Check-in desk.');
+    expect(refusal(state0(), { type: 'layout/unblock-and-place-exit', cell: [0, 12] })).toBe('Cell (0, 12) is the entrance.');
+    expect(commits({ type: 'layout/unblock-and-place-exit', cell: [16, 21] })).toBe(true);
+  });
   it('Escape clears a station selection to the cell cursor through a select action', () => {
     const s1 = reduce(state0(), { type: 'select', selection: { kind: 'cell', cell: [10, 12] } });
     expect(s1.selection).toEqual({ kind: 'cell', cell: [10, 12] });

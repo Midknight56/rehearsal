@@ -22,8 +22,8 @@ export function FindAttendee(props: { attendeeIds: string[]; onPick: (id: string
 
   const pick = (id: string): void => {
     props.onPick(id);
-    // Focus moves to the chosen option so F and Escape work from there (7.1, 7.2).
-    window.setTimeout(() => optionRefs.current.get(id)?.focus(), 0);
+    // Focus moves to the chosen option, at once, so F and Escape work from there (7.1, 7.2) even when the next key follows immediately.
+    optionRefs.current.get(id)?.focus();
   };
 
   const onInputKey = (e: KeyboardEvent<HTMLInputElement>): void => {

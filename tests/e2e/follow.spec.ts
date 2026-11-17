@@ -36,7 +36,14 @@ test.describe('7.1 and 7.2 follow and release', () => {
     await simulate(page);
     await find(page, 'doors#0000');
     await page.getByRole('button', { name: 'Follow' }).click();
+    await page.getByRole('button', { name: 'Pause' }).click();
+    // Seek to 755,000 ms, shortly before doors#0000 exits at 756,887 ms, through the scrubber, then play at 16×.
+    await page.getByRole('slider', { name: 'Simulated time' }).evaluate((el: HTMLInputElement) => {
+      el.value = '755000';
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    });
     await page.getByRole('radio', { name: '16×' }).check();
+    await page.getByRole('button', { name: 'Play' }).click();
     await expect.poll(() => readStatus(page), { timeout: 60_000 }).toMatch(/^doors#0000 exited at \d\d:\d\d; follow released\.$/);
   });
 });
@@ -48,7 +55,7 @@ test.describe('7.3 Find attendee', () => {
     const box = page.getByRole('combobox', { name: 'Find attendee' });
     await box.fill('doors#00');
     await expect(page.getByText('20 of 100 matches')).toBeVisible();
-    await expect(page.getByRole('option')).toHaveCount(20);
+    await expect(page.getByRole('listbox', { name: 'Matching attendees' }).getByRole('option')).toHaveCount(20);
     await box.fill('zzz');
     await expect(page.getByText('No attendee matches "zzz".')).toBeVisible();
   });

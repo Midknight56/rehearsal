@@ -1,7 +1,9 @@
+import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import { PREFS_KEY, createPrefsStore } from '../../src/storage/prefs';
 import { SCENARIOS_KEY, createScenarioStore, type SavedScenario } from '../../src/storage/scenarios';
 import { makeScenario } from './generators';
+import { checkProperty } from './property';
 
 class MemoryStorage implements Storage {
   data = new Map<string, string>();
@@ -133,5 +135,46 @@ describe('preferences', () => {
     const storage = new MemoryStorage();
     storage.failSet = 'QuotaExceededError';
     expect(() => createPrefsStore(storage).write({ version: 1, motion: 'reduce' })).not.toThrow();
+  });
+});
+
+describe('P14 storage (10.3-10.6)', () => {
+  type Op = { op: 'save'; seed: number; id: number } | { op: 'fail'; name: 'QuotaExceededError' | 'SecurityError' | null } | { op: 'remove'; id: number };
+  const ops = fc.array(
+    fc.oneof(
+      fc.record({ op: fc.constant('save' as const), seed: fc.integer({ min: 0, max: 50 }), id: fc.integer({ min: 0, max: 5 }) }),
+      fc.record({ op: fc.constant('fail' as const), name: fc.constantFrom('QuotaExceededError' as const, 'SecurityError' as const, null) }),
+      fc.record({ op: fc.constant('remove' as const), id: fc.integer({ min: 0, max: 5 }) }),
+    ) as fc.Arbitrary<Op>,
+    { maxLength: 30 },
+  );
+
+  it('save then load is deep-equal, the list never exceeds the bound, and a throwing setItem changes nothing', async () => {
+    await checkProperty('P14 storage', fc.tuple(fc.integer({ min: 1, max: 4 }), ops), ([maxSaved, sequence]) => {
+      const storage = new MemoryStorage();
+      const store = createScenarioStore(storage, { maxSaved });
+      for (const step of sequence) {
+        if (step.op === 'fail') {
+          storage.failSet = step.name;
+          continue;
+        }
+        const before = storage.data.get(SCENARIOS_KEY);
+        if (step.op === 'remove') {
+          const result = store.remove(`s${step.id}`);
+          if (!result.ok) expect(storage.data.get(SCENARIOS_KEY)).toBe(before);
+        } else {
+          const saved = entry(step.seed, `s${step.id}`);
+          const result = store.save(saved);
+          if (result.ok) {
+            expect(store.load(saved.id)).toEqual({ ok: true, scenario: saved.scenario });
+          } else {
+            expect(storage.data.get(SCENARIOS_KEY)).toBe(before);
+          }
+        }
+        const listed = store.list();
+        expect(listed.ok).toBe(true);
+        if (listed.ok) expect(listed.items.length).toBeLessThanOrEqual(maxSaved);
+      }
+    });
   });
 });

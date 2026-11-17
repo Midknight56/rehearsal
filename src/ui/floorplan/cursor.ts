@@ -37,16 +37,12 @@ export function keyActions(state: EditorState, key: string): EditorAction[] | nu
   }
   const cell = cursorCell(state);
   if (key === ' ' || key === 'Spacebar') return cell === null ? [] : [{ type: 'layout/toggle-blocked', cell }];
-  if (key === 'e' || key === 'E') return cell === null ? [] : [...unblock(state, cell), { type: 'layout/set-entrance', cell }];
-  if (key === 'x' || key === 'X') return cell === null ? [] : [...unblock(state, cell), { type: 'layout/set-exit', cell }];
+  if (key === 'e' || key === 'E') return cell === null ? [] : [{ type: isBlocked(state, cell) ? 'layout/unblock-and-place-entrance' : 'layout/set-entrance', cell }];
+  if (key === 'x' || key === 'X') return cell === null ? [] : [{ type: isBlocked(state, cell) ? 'layout/unblock-and-place-exit' : 'layout/set-exit', cell }];
   return null;
 }
 
-/**
- * A cell that was blocked with Space is cleared first, so E and X work on the cell the cursor just marked (floorplan.test.tsx).
- * The reducer still refuses set-entrance and set-exit on a blocked cell, so the two edits are two undo entries.
- */
-function unblock(state: EditorState, cell: Cell): EditorAction[] {
-  const blocked = state.scenario.layout.blockedCells.some((b) => b[0] === cell[0] && b[1] === cell[1]);
-  return blocked ? [{ type: 'layout/toggle-blocked', cell }] : [];
+/** E and X on a blocked cell use the combined action, so the unblock and the placement are one undo entry. */
+function isBlocked(state: EditorState, cell: Cell): boolean {
+  return state.scenario.layout.blockedCells.some((b) => b[0] === cell[0] && b[1] === cell[1]);
 }

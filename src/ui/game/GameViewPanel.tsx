@@ -258,11 +258,10 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
   const wrapper = (
     <div
       className="game-wrapper"
-      tabIndex={result === null ? undefined : 0}
-      role={result === null ? undefined : 'application'}
-      aria-label={result === null ? undefined : 'Game view'}
-      aria-describedby={result === null ? undefined : `${helpId}-help`}
-      hidden={result === null}
+      tabIndex={0}
+      role="application"
+      aria-label="Game view"
+      aria-describedby={`${helpId}-help`}
       onKeyDown={onWrapperKey}
     >
       <div ref={containerRef} className="game-canvas" />
@@ -296,15 +295,15 @@ export function GameViewPanel({ store, createView = createGameView }: Props): Re
           </div>
         </>
       )}
+      <p id={`${helpId}-help`} className="visually-hidden">{GAME_KEY_HELP}</p>
       {wrapper}
+      <FindAttendee attendeeIds={attendeeIds} onPick={pick} onFollow={(id) => followAttendee(id)} />
       {result === null ? null : (
         <>
-          <p id={`${helpId}-help`} className="visually-hidden">{GAME_KEY_HELP}</p>
           <p className="muted">{LEGEND}</p>
           {present > SPRITE_CAP ? (
             <p>{`Showing ${SPRITE_CAP.toLocaleString('en-US')} of ${present.toLocaleString('en-US')} attendees as sprites; the others are counted in the badges and every table is complete.`}</p>
           ) : null}
-          <FindAttendee attendeeIds={attendeeIds} onPick={pick} onFollow={(id) => followAttendee(id)} />
           <PersonTimeline attendeeId={attendee} rows={rows} onKeyDown={(e) => {
             if (e.key === 'f' || e.key === 'F') {
               e.preventDefault();

@@ -5,5 +5,12 @@
     "path": "52:1:0:1:1:5:3:3",
     "counterexample": "{\"extras\":[\" \",\"0\"],\"content\":\"\",\"position\":0,\"dropSettings\":false}",
     "date": "2026-11-17"
+  },
+  {
+    "property": "P14 storage",
+    "seed": -1675642384,
+    "path": "0:0:1:0:1:1:1",
+    "counterexample": "[1,[{\"op\":\"save\",\"seed\":0,\"id\":0}]]",
+    "date": "2026-11-17"
   }
 ]

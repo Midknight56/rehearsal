@@ -4,6 +4,7 @@
 import { useEffect, useRef, type ReactElement } from 'react';
 import { scenarioHash } from './domain/hash';
 import { createPathCache, describeNode } from './spatial/path-cache';
+import { createPrefsStore } from './storage/prefs';
 import { createRunController } from './ui/run/controller';
 import { createSimulationClient, type SimulationClient } from './workers/client';
 import { Landing } from './ui/landing/Landing';
@@ -12,10 +13,18 @@ import { StatusRegion } from './ui/StatusRegion';
 import { createEditorStore, type EditorStore } from './ui/state/store';
 import { useEditorState } from './ui/state/useEditorState';
 
+function browserStorage(): Storage | null {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
 export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; client?: SimulationClient } = {}): ReactElement {
   const storeRef = useRef<EditorStore | null>(null);
   if (storeRef.current === null) {
-    storeRef.current = props.store ?? createEditorStore({ hash: scenarioHash, now: () => new Date().toISOString() });
+    storeRef.current = props.store ?? createEditorStore({ hash: scenarioHash, now: () => new Date().toISOString(), prefs: createPrefsStore(browserStorage()).read() });
   }
   const store = storeRef.current;
   const clientRef = useRef<SimulationClient | null>(null);
@@ -28,7 +37,12 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
     controllerRef.current = controller;
   }
   const controller = controllerRef.current;
-  const { screen } = useEditorState(store);
+  const { screen, prefs } = useEditorState(store);
+
+  // The Motion toggle reaches the stylesheet through data-motion on the root element (tokens.css).
+  useEffect(() => {
+    document.documentElement.dataset.motion = prefs.motion;
+  }, [prefs.motion]);
 
   useEffect(() => {
     const dispose = (): void => client.dispose();
