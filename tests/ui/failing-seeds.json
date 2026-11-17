@@ -1,0 +1,9 @@
+[
+  {
+    "property": "P16 sheet isolation",
+    "seed": -816326022,
+    "path": "52:1:0:1:1:5:3:3",
+    "counterexample": "{\"extras\":[\" \",\"0\"],\"content\":\"\",\"position\":0,\"dropSettings\":false}",
+    "date": "2026-11-17"
+  }
+]

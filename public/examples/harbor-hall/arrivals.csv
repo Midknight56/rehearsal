@@ -1,0 +1,2 @@
+cohort_id,start_min,end_min,count,arrival_pattern,route
+doors,0,20,120,uniform,checkin|packs

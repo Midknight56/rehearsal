@@ -1,0 +1,3 @@
+station_id,label,servers,service_min_s,service_mode_s,service_max_s,cell_x,cell_y
+a#1,Desk A,1,8,15,22,10,12
+packs,Welcome packs,2,6,10,14,34,12

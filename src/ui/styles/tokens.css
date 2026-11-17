@@ -1,0 +1,66 @@
+/* Design tokens. Contrast is computed from these values by tests/ui/styles.test.ts (WCAG relative luminance). */
+:root {
+  --board: #0b1220;
+  --card: #151f33;
+  --ink: #eef2f8;
+  --ink-muted: #aab6cc;
+  --candidate: #22d3ee;
+  --baseline: #fb923c;
+  --focus: #fde047;
+  --line: #2b3a57;
+  --danger: #fca5a5;
+  --radius: 6px;
+  color-scheme: dark;
+}
+
+/* Focus is always visible: no rule in any stylesheet removes the outline. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Colour is never the only cue: baseline elements carry a dashed outline as well as the orange hue. */
+.baseline-layer,
+[data-role="baseline"] {
+  outline: 2px dashed var(--baseline);
+  outline-offset: 1px;
+  color: var(--baseline);
+}
+
+.candidate-layer,
+[data-role="candidate"] {
+  outline: 2px solid var(--candidate);
+  outline-offset: 1px;
+  color: var(--candidate);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Reduced motion: from the system setting or the Motion toggle (data-motion="reduce" on the root element). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none;
+    animation: none;
+    scroll-behavior: auto;
+  }
+}
+
+[data-motion="reduce"] *,
+[data-motion="reduce"] *::before,
+[data-motion="reduce"] *::after {
+  transition: none;
+  animation: none;
+  scroll-behavior: auto;
+}

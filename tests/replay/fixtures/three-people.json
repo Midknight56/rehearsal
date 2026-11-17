@@ -1,0 +1,351 @@
+{
+  "layout": {
+    "cols": 10,
+    "rows": 3,
+    "cellSizeM": 0.5,
+    "blockedCells": [],
+    "entrance": [
+      0,
+      1
+    ],
+    "exit": [
+      9,
+      1
+    ]
+  },
+  "stations": [
+    {
+      "id": "desk",
+      "label": "Desk",
+      "cell": [
+        4,
+        1
+      ],
+      "servers": 1,
+      "service": {
+        "kind": "constant",
+        "seconds": 3
+      }
+    }
+  ],
+  "walkSpeedMps": 1,
+  "completion": "complete",
+  "unfinished": [],
+  "trace": {
+    "version": 1,
+    "paths": [
+      {
+        "id": 0,
+        "from": {
+          "kind": "entrance"
+        },
+        "to": {
+          "kind": "station",
+          "id": "desk"
+        },
+        "cells": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            1
+          ]
+        ],
+        "distanceM": 2,
+        "durationMs": 2000
+      },
+      {
+        "id": 3,
+        "from": {
+          "kind": "station",
+          "id": "desk"
+        },
+        "to": {
+          "kind": "exit"
+        },
+        "cells": [
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            1
+          ],
+          [
+            6,
+            1
+          ],
+          [
+            7,
+            1
+          ],
+          [
+            8,
+            1
+          ],
+          [
+            9,
+            1
+          ]
+        ],
+        "distanceM": 2.5,
+        "durationMs": 2500
+      }
+    ],
+    "attendees": [
+      {
+        "id": "a#0000",
+        "cohortId": "a",
+        "arrivalMs": 0,
+        "exitMs": 7500
+      },
+      {
+        "id": "a#0001",
+        "cohortId": "a",
+        "arrivalMs": 1000,
+        "exitMs": 10500
+      },
+      {
+        "id": "a#0002",
+        "cohortId": "a",
+        "arrivalMs": 2000,
+        "exitMs": 13500
+      }
+    ],
+    "events": [
+      {
+        "kind": "arrive",
+        "timeMs": 0,
+        "attendeeId": "a#0000"
+      },
+      {
+        "kind": "depart",
+        "timeMs": 0,
+        "attendeeId": "a#0000",
+        "from": {
+          "kind": "entrance"
+        },
+        "to": {
+          "kind": "station",
+          "id": "desk"
+        },
+        "pathId": 0,
+        "arriveMs": 2000
+      },
+      {
+        "kind": "arrive",
+        "timeMs": 1000,
+        "attendeeId": "a#0001"
+      },
+      {
+        "kind": "depart",
+        "timeMs": 1000,
+        "attendeeId": "a#0001",
+        "from": {
+          "kind": "entrance"
+        },
+        "to": {
+          "kind": "station",
+          "id": "desk"
+        },
+        "pathId": 0,
+        "arriveMs": 3000
+      },
+      {
+        "kind": "join",
+        "timeMs": 2000,
+        "attendeeId": "a#0000",
+        "stationId": "desk",
+        "position": 0
+      },
+      {
+        "kind": "start",
+        "timeMs": 2000,
+        "attendeeId": "a#0000",
+        "stationId": "desk",
+        "server": 0,
+        "waitMs": 0
+      },
+      {
+        "kind": "arrive",
+        "timeMs": 2000,
+        "attendeeId": "a#0002"
+      },
+      {
+        "kind": "depart",
+        "timeMs": 2000,
+        "attendeeId": "a#0002",
+        "from": {
+          "kind": "entrance"
+        },
+        "to": {
+          "kind": "station",
+          "id": "desk"
+        },
+        "pathId": 0,
+        "arriveMs": 4000
+      },
+      {
+        "kind": "join",
+        "timeMs": 3000,
+        "attendeeId": "a#0001",
+        "stationId": "desk",
+        "position": 0
+      },
+      {
+        "kind": "join",
+        "timeMs": 4000,
+        "attendeeId": "a#0002",
+        "stationId": "desk",
+        "position": 1
+      },
+      {
+        "kind": "complete",
+        "timeMs": 5000,
+        "attendeeId": "a#0000",
+        "stationId": "desk",
+        "server": 0
+      },
+      {
+        "kind": "depart",
+        "timeMs": 5000,
+        "attendeeId": "a#0000",
+        "from": {
+          "kind": "station",
+          "id": "desk"
+        },
+        "to": {
+          "kind": "exit"
+        },
+        "pathId": 3,
+        "arriveMs": 7500
+      },
+      {
+        "kind": "start",
+        "timeMs": 5000,
+        "attendeeId": "a#0001",
+        "stationId": "desk",
+        "server": 0,
+        "waitMs": 2000
+      },
+      {
+        "kind": "exit",
+        "timeMs": 7500,
+        "attendeeId": "a#0000"
+      },
+      {
+        "kind": "complete",
+        "timeMs": 8000,
+        "attendeeId": "a#0001",
+        "stationId": "desk",
+        "server": 0
+      },
+      {
+        "kind": "depart",
+        "timeMs": 8000,
+        "attendeeId": "a#0001",
+        "from": {
+          "kind": "station",
+          "id": "desk"
+        },
+        "to": {
+          "kind": "exit"
+        },
+        "pathId": 3,
+        "arriveMs": 10500
+      },
+      {
+        "kind": "start",
+        "timeMs": 8000,
+        "attendeeId": "a#0002",
+        "stationId": "desk",
+        "server": 0,
+        "waitMs": 4000
+      },
+      {
+        "kind": "exit",
+        "timeMs": 10500,
+        "attendeeId": "a#0001"
+      },
+      {
+        "kind": "complete",
+        "timeMs": 11000,
+        "attendeeId": "a#0002",
+        "stationId": "desk",
+        "server": 0
+      },
+      {
+        "kind": "depart",
+        "timeMs": 11000,
+        "attendeeId": "a#0002",
+        "from": {
+          "kind": "station",
+          "id": "desk"
+        },
+        "to": {
+          "kind": "exit"
+        },
+        "pathId": 3,
+        "arriveMs": 13500
+      },
+      {
+        "kind": "exit",
+        "timeMs": 13500,
+        "attendeeId": "a#0002"
+      }
+    ],
+    "segments": [
+      {
+        "attendeeId": "a#0000",
+        "startMs": 0,
+        "endMs": 2000,
+        "pathId": 0
+      },
+      {
+        "attendeeId": "a#0000",
+        "startMs": 5000,
+        "endMs": 7500,
+        "pathId": 3
+      },
+      {
+        "attendeeId": "a#0001",
+        "startMs": 1000,
+        "endMs": 3000,
+        "pathId": 0
+      },
+      {
+        "attendeeId": "a#0001",
+        "startMs": 8000,
+        "endMs": 10500,
+        "pathId": 3
+      },
+      {
+        "attendeeId": "a#0002",
+        "startMs": 2000,
+        "endMs": 4000,
+        "pathId": 0
+      },
+      {
+        "attendeeId": "a#0002",
+        "startMs": 11000,
+        "endMs": 13500,
+        "pathId": 3
+      }
+    ]
+  }
+}
