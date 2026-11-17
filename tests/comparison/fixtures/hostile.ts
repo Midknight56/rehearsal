@@ -1,0 +1,20 @@
+import type { Scenario } from '../../../src/domain/scenario';
+
+/** Strings that spreadsheet programs and HTML readers treat as active content. All of them are plain data to Rehearsal. */
+export const hostile: Scenario = {
+  schemaVersion: 1,
+  id: 'hostile',
+  revision: 0,
+  title: '-Harbor',
+  modelVersion: '0.1.0',
+  baseSeed: 'hostile',
+  horizonMs: 600_000,
+  layout: { cols: 6, rows: 6, cellSizeM: 0.5, blockedCells: [], entrance: [0, 0], exit: [5, 5] },
+  walkSpeedMps: 1.2,
+  stations: [
+    { id: 'evil', label: '=SUM(A1:A3)', cell: [2, 2], servers: 1, service: { kind: 'constant', seconds: 5 } },
+    { id: 'tag', label: '<script>alert(1)</script>', cell: [4, 4], servers: 1, service: { kind: 'constant', seconds: 5 } },
+  ],
+  cohorts: [{ id: '+late', startMs: 0, endMs: 60_000, count: 3, arrivals: 'even', route: ['evil', 'tag'] }],
+  notes: '@all',
+};

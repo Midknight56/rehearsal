@@ -11,7 +11,7 @@ Every hook file carries `version`, `hooks`, `name`, `trigger`, `matcher`, `actio
 
 When `scenario-editor-and-replay` task 1 adds the `test:ui` script, `npm run verify` also runs it (a refinement to record in plan section 4 and section 13); the 600 s timeout is meant to cover it.
 
-Hooks do not fire in Kiro CLI runs. They are observed later in the Kiro IDE, and no task in any spec depends on a hook firing: each task's own `Verify:` line is its acceptance.
+The stop hook has been seen firing in Kiro CLI 3.x runs started with `--trust-workspace`, its output reaching Kiro; the save hook is observed in the Kiro IDE. Neither is cited anywhere until a `Setup: hook observation (matrix row 31)` row in `docs/kiro-log.md` quotes its output, and no task in any spec depends on a hook firing: each task's own `Verify:` line is its acceptance.
 
 Name note. Plan section 11.2 lists `typecheck-on-save.json` (matcher `^src/.*\.tsx?$`, `npm run typecheck`, 120 s). This repository ships `model-tests-on-save.json`, scoped to the two engine folders, in its place: the stop hook already typechecks everything through `npm run verify`, and a save under `src/simulation/` or `src/spatial/` is what can break a hand-calculated fixture. Plan section 11.2 also lists `model-rules.md`, `ownership.md` and `ui-rules.md`; the steering files shipped here are `claims-policy.md`, `units-and-determinism.md`, `model-limits.md`, `accessibility.md` and `revision-2026-11-16.md`, all `inclusion: always`. `ownership.md` is not shipped: plan section 10 is the ownership text, and the revision of 16 November 2026 replaces its agent roles. Do not add a typecheck save hook beside the shipped one unless both were observed and the save-time cost of running both was measured and logged.
 
