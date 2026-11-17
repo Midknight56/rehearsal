@@ -22,7 +22,7 @@ Eighteen tasks (0 to 17) on branch `kiro/simulation-contract`, November 4–11, 
   - _Requirements: 10.1, 10.8, 11.6_
   - _Owner: kiro_
 
-- [ ] 2. Event heap, lines and the scheduler core: matrix rows 1–3 (first bounded task, 30-credit cap)
+- [x] 2. Event heap, lines and the scheduler core: matrix rows 1–3 (first bounded task, 30-credit cap)
   - Implement `src/simulation/heap.ts` (`EventHeap` as an array-backed binary min-heap with `compareEvents` over `timeMs`, `KIND_PRIORITY`, `attendeeId` in code-unit order, `sequence`), `src/simulation/line.ts` (`insert` keeping `(queueJoinMs, attendeeId)` order and returning the position at insertion, which the scheduler does not use for `join` events, `shift`, `length`, `entries`).
   - Implement `runSchedule` in `src/simulation/scheduler.ts` exactly as design steps 1–6: push external arrivals; per timestamp pop every equal-time event including zero-length transfers pushed during the batch; emit `join` events after the batch in line order with the position read from the line's current order after the batch and before dispatch (never the value `insert` returned); dispatch stations in code-unit order with the lowest free server; record a `SettledSample`; stop when the heap is empty or the next event is past `capMs`; set `completion`, `unfinished` (sorted) and the `cap` event.
   - Emit `arrive`, `depart`, `join`, `start`, `complete`, `exit` events and `MovementSegment`s only when `input.trace` is `true`; keep `AttendeeRecord.visits` and `walkingMs` in both modes.
@@ -31,47 +31,47 @@ Eighteen tasks (0 to 17) on branch `kiro/simulation-contract`, November 4–11, 
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.7, 4.8, 4.9, 8.3, 8.7_
   - _Owner: kiro_
 
-- [ ] 3. Grid paths and the path cache: matrix row 4 and the Harbor Hall walking values (second bounded task)
+- [x] 3. Grid paths and the path cache: matrix row 4 and the Harbor Hall walking values (second bounded task)
   - Implement `src/spatial/grid.ts`: `isInBounds`, `isBlocked`, `findPath` (FIFO BFS, neighbours enqueued north, east, south, west, parent on first discovery, `[start]` when start equals goal, `null` when unreachable), `pathDistanceM`, `walkDurationMs = Math.ceil(distanceM / walkSpeedMps * 1000)`.
   - Implement `src/spatial/path-cache.ts`: `createPathCache` over every ordered pair of entrance, stations by `id` and exit with ids in that order, `key = stableJson({ layout, stations, walkSpeedMps })`, where `layout.blockedCells` is sorted by `x` then `y` and `stations` is the `{ id, cell }` pairs sorted by `id`; `stableJson` (keys sorted at every object level, arrays kept in the given order) is written in `src/domain/hash.ts` in this task and reused by `canonicalJson` in task 6, `lookup` throwing `Path cache: no path between <a> and <b>`, the `unreachable` and `unsafe` lists, `nodeCell` and `describeNode` (`entrance (0,12)`, `exit (0,4)`, `station "packs" (34,12)`).
   - Verify: `npx vitest run tests/model/spatial.test.ts` passes: direct path `[[0,1],[1,1],[2,1]]` 1 m 1,000 ms; blocked (1,1) gives `[[0,1],[0,0],[1,0],[2,0],[2,1]]` 2 m 2,000 ms twice; Harbor Hall baseline 4,167 / 10,000 / 17,500 ms and 38 m; shorter route 4,167 / 3,334 / 7,500 ms and 18 m; the two caches have different `key`s and permuting `blockedCells` leaves a `key` unchanged. Record the credits for tasks 2 and 3 in `docs/kiro-log.md` as the per-task baseline for the November 11 reallocation.
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
   - _Owner: kiro_
 
-- [ ] 4. Scenario schema, limits and validation passes 1–3 with exact messages
+- [x] 4. Scenario schema, limits and validation passes 1–3 with exact messages
   - Implement `src/domain/scenario.ts` (`ScenarioSchema` as a zod object matching the `Scenario` type; *verify* the zod 4.6.7 helper names for tuples, literals and discriminated unions at scaffold), `src/domain/limits.ts` (`LIMITS`, `DRAIN_CAP_MS = 7_200_000`) and `src/domain/validate.ts` with `toDurationMs`, the `MESSAGES` table (every template of the design's Error Handling table, character for character) and `validateScenario` running passes 1–3 of the design, collecting every issue and never mutating the input: pass 1 structural (`SCHEMA_VERSION`, `MODEL_VERSION_FORMAT`, `NON_FINITE`, wrong types and missing fields), pass 2 limits (a non-whole `horizonMs`, `startMs`, `endMs`, `cols` or `rows` is reported under the range code of its field; codes: `HORIZON_RANGE`, `GRID_SIZE`, `CELL_SIZE`, `WALK_SPEED`, `SERVERS_RANGE`, `SERVICE_RANGE`, `COHORT_WINDOW`, `COUNT_RANGE`, `ARRIVAL_PATTERN`, `ROUTE_LENGTH`, `ATTENDEE_LIMIT`, `STATION_LIMIT`), pass 3 identifiers (`SEED_FORMAT`, `ID_FORMAT`, `DUPLICATE_ID`, `ROUTE_UNKNOWN_STATION`, `ROUTE_REPEAT`); passes 4 and 5 are task 5 and return no issue until then.
   - Emit the `MODEL_VERSION_MISMATCH` warning with the exact message when `modelVersion` differs from `MODEL_VERSION` (import the constant from `src/simulation/version.ts`, created here with the value `'0.1.0'`, the R1 value; a pre-release string such as `'0.0.0-dev'` would fail the `^\d+\.\d+\.\d+$` pattern of `MODEL_VERSION_FORMAT`, and every test scenario carries `MODEL_VERSION`).
   - Verify: `npx vitest run tests/model/validation.test.ts -t "pass 1|pass 2|pass 3|warning"` passes (*verify* the name filter on the pinned Vitest; otherwise run the file and confirm only the pass 4–5 cases fail): one test per issue code of passes 1–3 asserting the exact message and `path`; a scenario with three defects returns three issues; a deep-frozen input is unchanged; `modelVersion: '0.9.0'` yields one warning and `ok: true`; the Harbor Hall fixtures and the row fixtures produce no issue from passes 1–3.
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5, 1.7, 2.6_
   - _Owner: kiro_
 
-- [ ] 5. Validation passes 4–5: geometry and reachability
+- [x] 5. Validation passes 4–5: geometry and reachability
   - Extend `validateScenario` with pass 4 (`CELL_OUT_OF_BOUNDS`, also for a coordinate that is not a whole number, for the entrance, exit, station cells and blocked cells; `CELL_BLOCKED`; `DUPLICATE_BLOCKED_CELL`) and pass 5, which calls `createPathCache` and converts the `unreachable` pairs named in requirement 1.8 (entrance to each station, entrance to the exit, and each consecutive pair of each cohort route, each reported once) to `UNREACHABLE` (path `layout` for a station or the exit unreachable from the entrance, `cohorts[i].route[k]` for a route segment, message rendered with `describeNode`) and each `unsafe` pair to `UNSAFE_MS`; passes 4 and 5 run only when passes 1–3 found no issue.
   - Verify: `npx vitest run tests/model/validation.test.ts` passes in full: the exact message and `path` per code for `CELL_OUT_OF_BOUNDS`, `CELL_BLOCKED`, `DUPLICATE_BLOCKED_CELL`, `UNREACHABLE` (`No walkable path between station "checkin" (10,12) and station "packs" (14,8).` for a walled-off `packs`) and `UNSAFE_MS`; an out-of-bounds cell produces no `UNREACHABLE` issue (passes 4–5 skipped); the Harbor Hall fixtures and the row fixtures validate with no issues.
   - _Requirements: 1.4, 1.5, 1.8_
   - _Owner: kiro_
 
-- [ ] 6. Canonical JSON and the scenario hash
+- [x] 6. Canonical JSON and the scenario hash
   - Implement `src/domain/hash.ts`: `canonicalJson` (drop only the four top-level fields `id`, `revision`, `title`, `notes`, so station and cohort `id`s stay in the hash; build on `stableJson` from task 3; sort keys at every level; `stations` and `cohorts` by `id` in code-unit order; `blockedCells` by `x` then `y`) and `scenarioHash` (UTF-8 bytes, `globalThis.crypto.subtle.digest('SHA-256', …)`, lowercase hex).
   - Confirm `globalThis.crypto.subtle` exists in the Vitest Node environment on the pinned Node; if not, the test helper (not the engine) injects `node:crypto`'s `webcrypto`, and the observation is logged (*verify*).
   - Verify: `npx vitest run tests/model/hash.test.ts tests/model/spatial.test.ts` passes: a title change and a station reorder keep the hash, a `servers` change and a station `id` change alter it, the hash is 64 lowercase hex characters, and the three Harbor Hall fixtures have three distinct hashes.
   - _Requirements: 1.6_
   - _Owner: kiro_
 
-- [ ] 7. Keyed random streams and the triangular sampler: matrix row 5
+- [x] 7. Keyed random streams and the triangular sampler: matrix row 5
   - Implement `src/simulation/random.ts`: `createGenerator(key)` as the only import of `seedrandom` 3.0.5 (*verify* the import form under TypeScript 7 strict settings at scaffold and record it in the file header), `serviceKey` and `arrivalKey` building exactly `${baseSeed}|${replication}|${attendeeId}|${stationId}|service` and `${baseSeed}|${replication}|${attendeeId}|arrival`.
   - Implement `src/simulation/sampling.ts`: `triangular(u, a, c, b)` with the inverse-CDF branches and `a === b` returning `a`; `serviceDurationMs(service, draw)` taking no draw for `constant` or `minS === maxS` and passing every result through `toDurationMs`; `compileServiceSampler(scenario, replication)` creating one generator per `(attendeeId, stationId)` on first use and memoizing the drawn duration.
   - Verify: `npx vitest run tests/model/sampler.test.ts` passes: `triangular(0.125|0.5|0.875, 10, 20, 30)` = 15, 20, 25 within 1e-9; `triangular(0.3, 7, 7, 7)` = 7; `toDurationMs(0.0004)` = 1 and `toDurationMs(15)` = 15,000; a constant service never calls the draw spy; two `createGenerator('rehearsal|0|doors#0000|checkin|service')` instances agree on their first ten values, all in `[0, 1)`.
   - _Requirements: 3.1, 3.3, 3.4, 3.5, 3.7_
   - _Owner: kiro_
 
-- [ ] 8. Attendee IDs and arrivals: matrix row 8
+- [x] 8. Attendee IDs and arrivals: matrix row 8
   - Implement `src/simulation/arrivals.ts`: `attendeeId` (`${cohortId}#${ordinal padded to 4}`), `evenArrivalMs` with the clamp to `[startMs, endMs - 1]`, `uniformArrivalMs`, and `compileAttendees` taking one draw per uniform attendee from `createGenerator(arrivalKey(...))`, then sorting all attendees by `(arrivalMs, id)` in code-unit order without renumbering.
   - Verify: `npx vitest run tests/model/arrivals.test.ts` passes: cohort `doors` even 0–1,200,000 ms count 120 gives `(j + 0.5) × 10,000` with first 5,000 and last 1,195,000, all inside `[0, 1,200,000)`; IDs `doors#0000` … `doors#0119`; count 1 in `[0, 1)` arrives at 0; uniform with stubbed draws 0 and 0.999999 stays inside the band; two overlapping windows validate; a count-0 cohort compiles to no attendees.
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7_
   - _Owner: kiro_
 
-- [ ] 9. The ten metrics, denominators, p95 and the dash rule over scheduler output: matrix row 11 and the metric halves of rows 1, 2, 6, 7
+- [x] 9. The ten metrics, denominators, p95 and the dash rule over scheduler output: matrix row 11 and the metric halves of rows 1, 2, 6, 7
   - Implement `src/simulation/metrics.ts`: `p95Index`, `percentile95`, `formatMetricValue` with the exact unit rules and the `*` suffix for conditioned values, and `computeMetrics(out, scenario, cache)` producing every `MetricValue` of the design's definitions table from a `ScheduleOutput` (populations `admitted`, `completedJourney`, `closingWindow`; `value: null` with `n: 0` for undefined means, totals and percentiles; busy intervals clipped to `[0, H]`; queue integrals between settled samples over `[0, H]`; stations in code-unit order; `conditioned` and the exact `note` text when `unfinished` is non-empty).
   - Test it over `runSchedule` output of the `ScheduleInput`s in `tests/model/fixtures/rows.ts` (rows 1, 2, 6, 7) with the matching row scenarios and `createPathCache` of their one-cell layouts, so this task needs neither `simulate` nor `buildTrace`.
   - Verify: `npx vitest run tests/model/metrics.test.ts tests/model/empty.test.ts` passes: `p95Index(20|1|3)` = 18, 0, 2; `percentile95([])` is `null`; `formatMetricValue` gives `—`, `30.0 s`, `100.0%`, `2.00 h`, `2.67 h`, `3`, and `30.0 s*` for a conditioned value; row 1 (from `runSchedule`) mean wait 30,000 ms, p95 60,000 ms, utilization 1.0, average queue 0.5, max queue 1, completed 3; row 2 utilization 0.5, every wait 0; row 6 `busyMs` 60,000, inService 1, journey `n` 1; row 7 `queueWait.*` and `journeyTime.*` `conditioned: true` with `n: 1`; row 11 (an empty `ScheduleOutput`) nulls and dashes with utilization 0 and staff-hours defined.
