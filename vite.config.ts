@@ -6,6 +6,6 @@ export default defineConfig({
   worker: { format: 'es' },
   test: {
     environment: 'node',
-    include: ['tests/model/**/*.test.ts', 'tests/comparison/**/*.test.ts'],
+    include: ['tests/model/**/*.test.ts', 'tests/comparison/**/*.test.ts', 'tests/kiro/**/*.test.ts'],
   },
 });

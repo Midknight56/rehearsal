@@ -1,4 +1,4 @@
-// One baseline toggle and one candidate toggle per open tab (requirement 12.1). aria-pressed carries the state.
+// One baseline toggle and one candidate toggle per open tab (requirement 12.1). aria-pressed carries the state. The accessible name starts with the visible text (WCAG 2.5.3, axe rule label-content-name-mismatch).
 import type { ReactElement } from 'react';
 import type { EditorStore } from '../state/store';
 import { useEditorState } from '../state/useEditorState';
@@ -24,12 +24,12 @@ export function PickScenarios({ store }: { store: EditorStore }): ReactElement {
               <tr key={key}>
                 <th scope="row">{scenario.title}</th>
                 <td>
-                  <button type="button" data-testid={`pick-baseline-${key}`} aria-pressed={baselineKey === key} aria-label={`Baseline: ${scenario.title}`} onClick={() => store.dispatch({ type: 'compare/pick', side: 'baseline', key })}>
+                  <button type="button" data-testid={`pick-baseline-${key}`} aria-pressed={baselineKey === key} aria-label={`${baselineKey === key ? 'Baseline' : 'Use as baseline'}: ${scenario.title}`} onClick={() => store.dispatch({ type: 'compare/pick', side: 'baseline', key })}>
                     {baselineKey === key ? 'Baseline' : 'Use as baseline'}
                   </button>
                 </td>
                 <td>
-                  <button type="button" data-testid={`pick-candidate-${key}`} aria-pressed={candidateKey === key} aria-label={`Candidate: ${scenario.title}`} onClick={() => store.dispatch({ type: 'compare/pick', side: 'candidate', key })}>
+                  <button type="button" data-testid={`pick-candidate-${key}`} aria-pressed={candidateKey === key} aria-label={`${candidateKey === key ? 'Candidate' : 'Use as candidate'}: ${scenario.title}`} onClick={() => store.dispatch({ type: 'compare/pick', side: 'candidate', key })}>
                     {candidateKey === key ? 'Candidate' : 'Use as candidate'}
                   </button>
                 </td>

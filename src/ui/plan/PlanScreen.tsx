@@ -21,6 +21,7 @@ import { OpenJson } from '../import/OpenJson';
 import type { SavedScenarios } from '../saved';
 import { SaveBar } from '../SaveBar';
 import { SaveError } from '../SaveError';
+import { ShareLinkButton } from '../ShareLinkButton';
 import { PrintControls } from '../print/PrintControls';
 import { TopBar } from '../TopBar';
 
@@ -82,6 +83,7 @@ export function PlanScreen({ store, controller, saved }: { store: EditorStore; c
         <OpenJson store={store} label="Open JSON" />
         <PrintControls store={store} part="workbook" />
         {saved === undefined ? null : <SaveBar store={store} saved={saved} />}
+        <ShareLinkButton store={store} />
         <label>
           Motion{' '}
           <select value={state.prefs.motion} onChange={(e) => setMotion(e.target.value as Prefs['motion'])}>

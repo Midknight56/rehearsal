@@ -44,8 +44,11 @@ describe('README model limits (requirement 11.2)', () => {
     expect(readme).toContain(NOT_A_FORECAST);
   });
 
-  it('says the app was not tested with users, since no walkthrough is logged', () => {
-    expect(readme).toMatch(/not tested with users/);
+  it('makes no claim that people used or tested the app, and no claim of demand or time saved', () => {
+    const text = readme;
+    const userClaims = [/tested with (real )?users/i, /users (liked|loved|found)/i, /organi[sz]ers (said|told|tested)/i, /user study/i, /testimonial/i];
+    const valueClaims = [/saves? (time|hours)/i, /demand for/i];
+    for (const pattern of [...userClaims, ...valueClaims]) expect(text).not.toMatch(pattern);
   });
 
   it('lists the three commands', () => {

@@ -10,7 +10,9 @@ import { createSavedScenarios } from './ui/saved';
 import { createCompareController } from './ui/compare/controller';
 import { CompareScreen } from './ui/compare/CompareScreen';
 import { createRunController, type RunController } from './ui/run/controller';
+import { createGameView } from './replay/gameView';
 import { createSimulationClient, type SimulationClient } from './workers/client';
+import { ShareLinkOpener } from './ui/import/ShareLinkOpener';
 import { Landing } from './ui/landing/Landing';
 import { PlanScreen } from './ui/plan/PlanScreen';
 import { PrintScreen } from './ui/print/PrintScreen';
@@ -27,6 +29,10 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
   const clientRef = useRef<SimulationClient | null>(null);
   if (clientRef.current === null) clientRef.current = props.client ?? createSimulationClient();
   const client = clientRef.current;
+  // The landing preview runs on its own client, so it never shares a worker or a run with the Plan screen's controller.
+  const previewClientRef = useRef<SimulationClient | null>(null);
+  if (previewClientRef.current === null) previewClientRef.current = createSimulationClient();
+  const previewClient = previewClientRef.current;
   const controllerRef = useRef<ReturnType<typeof createRunController> | null>(null);
   if (controllerRef.current === null) {
     const controller = createRunController(client, store.dispatch, { pathCache: createPathCache, describe: describeNode });
@@ -43,6 +49,17 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
   // Simulate on the Plan screen cancels a running comparison first (requirement 12.3).
   const controller = useMemo(() => ({ ...controllerRef.current!, start: (...args: Parameters<RunController['start']>) => { compareController.cancel(); return (controllerRef.current as RunController).start(...args); } }), [compareController]);
   const { screen, prefs } = useEditorState(store);
+  const previewDeps = useMemo(() => ({ client: previewClient, createView: createGameView }), [previewClient]);
+
+  // Leaving the landing ends the preview's worker; the page hiding does too.
+  useEffect(() => {
+    if (screen !== 'landing') previewClient.dispose();
+  }, [screen, previewClient]);
+  useEffect(() => {
+    const dispose = (): void => previewClient.dispose();
+    window.addEventListener('pagehide', dispose);
+    return () => window.removeEventListener('pagehide', dispose);
+  }, [previewClient]);
 
   // The Motion toggle reaches the stylesheet through data-motion on the root element (tokens.css).
   useEffect(() => {
@@ -62,8 +79,9 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
   return (
     <>
       <StatusRegion store={store} />
+      <ShareLinkOpener store={store} />
       {screen === 'landing' ? (
-        <Landing store={store} saved={saved} {...(props.fetchImpl === undefined ? {} : { fetchImpl: props.fetchImpl })} />
+        <Landing store={store} saved={saved} preview={previewDeps} {...(props.fetchImpl === undefined ? {} : { fetchImpl: props.fetchImpl })} />
       ) : screen === 'print' ? (
         <PrintScreen store={store} />
       ) : screen === 'compare' ? (

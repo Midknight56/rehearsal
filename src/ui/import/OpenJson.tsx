@@ -1,30 +1,16 @@
 // Open JSON (requirement 10.7): a file input, then a dialog with `<title>, hash <hash8>, model <version>`, every warning of the
 // parser verbatim and the buttons Open and Cancel. Open replaces the current tab's scenario as one committed edit; saved results
 // carry no trace and are not loaded. A refused file shows its message and changes nothing.
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import { useRef, useState, type ReactElement } from 'react';
 import { openScenarioJson, type OpenJsonResult } from '../../imports/scenarioJson';
 import type { EditorStore } from '../state/store';
+import { ReviewDialog } from './ReviewDialog';
 
 type Pending = { name: string; result: OpenJsonResult };
 
 export function OpenJson({ store, label, onOpened }: { store: EditorStore; label: string; onOpened?: () => void }): ReactElement {
   const [pending, setPending] = useState<Pending | null>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const openButton = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (dialog === null) return;
-    if (pending !== null && !dialog.open) {
-      if (typeof dialog.showModal === 'function') dialog.showModal();
-      else dialog.setAttribute('open', '');
-      openButton.current?.focus();
-    } else if (pending === null && dialog.open) {
-      if (typeof dialog.close === 'function') dialog.close();
-      else dialog.removeAttribute('open');
-    }
-  }, [pending]);
 
   const close = (): void => {
     setPending(null);
@@ -50,38 +36,13 @@ export function OpenJson({ store, label, onOpened }: { store: EditorStore; label
     close();
   };
 
-  const result = pending?.result ?? null;
   return (
     <>
       <label>
         {`${label} `}
         <input ref={inputRef} type="file" accept=".json,application/json" data-testid="import-json" onChange={(e) => void choose(e.target.files)} />
       </label>
-      <dialog
-        ref={dialogRef}
-        aria-labelledby="open-json-heading"
-        onCancel={(e) => {
-          e.preventDefault();
-          close();
-        }}
-      >
-        <h2 id="open-json-heading">Review the scenario file</h2>
-        {result === null ? null : result.ok ? (
-          <>
-            <p>{`${result.scenario.title}, hash ${result.hash.slice(0, 8)}, model ${result.scenario.modelVersion}`}</p>
-            {result.warnings.map((w) => (
-              <p key={`${w.code}:${w.message}`} className="field-error">{w.message}</p>
-            ))}
-            {result.results.length > 0 ? <p className="muted">Saved results carry no replay trace and are not loaded; simulate to see results.</p> : null}
-          </>
-        ) : (
-          <p className="field-error">{result.message}</p>
-        )}
-        <p>
-          {result !== null && result.ok ? <button ref={openButton} type="button" onClick={confirm}>Open</button> : null}{' '}
-          <button type="button" onClick={close}>Cancel</button>
-        </p>
-      </dialog>
+      <ReviewDialog result={pending?.result ?? null} heading="Review the scenario file" onOpen={confirm} onCancel={close} />
     </>
   );
 }

@@ -4,9 +4,13 @@
     {
       "name": "model-tests-on-save",
       "trigger": "PostFileSave",
-      "matcher": "^src/(simulation|spatial)/",
-      "action": { "type": "command", "command": "npm run test:model" },
-      "timeout": 300
+      "matcher": "src.(simulation|spatial).",
+      "action": {
+        "type": "command",
+        "command": "npm run test:model"
+      },
+      "timeout": 300,
+      "enabled": true
     }
   ]
 }

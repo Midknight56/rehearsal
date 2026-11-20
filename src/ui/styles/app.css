@@ -389,8 +389,59 @@ td input:not([type="radio"]):not([type="checkbox"]) {
 }
 
 .landing {
+  max-width: 80rem;
+  margin: 24px auto 0;
+  padding: 0 var(--edge);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-intro {
   max-width: 44rem;
-  margin: 6vh auto 0;
+}
+
+/* The preview: the game view on the left, the result line beside it; one column under 1,000 px. */
+.landing-preview {
+  margin-top: 24px;
+}
+
+.landing-preview > h2 {
+  margin-top: 0;
+}
+
+.landing-preview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.landing-preview-grid > * {
+  min-width: 0;
+}
+
+.landing-canvas {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.landing-headline {
+  margin: 0 0 12px;
+  font: 700 clamp(22px, 2.6vw, 34px) / 1.25 var(--font-display);
+  color: var(--ink);
+}
+
+@media (max-width: 1000px) {
+  .landing-preview-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .landing-preview {
+    padding: 16px;
+  }
 }
 
 .landing .actions {

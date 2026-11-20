@@ -1,0 +1,110 @@
+[tool] Kiro Powers
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Tool Load
+[tool] status: Completed
+[tool] Tool Load
+[tool] status: Completed
+[tool] Tool Load
+[tool] status: Completed
+[tool] Tool Load
+[tool] status: Completed
+[tool] Tool Load
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_navigate
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_snapshot
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_click
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_snapshot
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_click
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_wait_for
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_snapshot
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] Read File
+[tool] status: InProgress
+[tool] status: Failed: Read File
+[tool] Run Command
+[denied] tool permission approval is not supported in non-interactive mode. Use --trust-tools=run_command to auto-approve this tool, or --trust-all-tools to auto-approve every tool.
+[tool] status: Failed: Run Command
+Saving to a file didn't work, so I'll read the snapshot inline.
+[tool] @rehearsal/playwright/browser_snapshot
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+Now the Compare tab.
+[tool] @rehearsal/playwright/browser_click
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_click
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_click
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[ERROR] [KRS] HTTP 429 requestId=139178b2-08ab-41cb-a535-26a93ee1079a body={"__type":"com.amazon.kiro.runtimeservice#ThrottlingException","message":"Too many requests, please wait before trying again.","reason":"USER_REQUEST_RATE_EXCEEDED"}
+[tool] @rehearsal/playwright/browser_click
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_wait_for
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_snapshot
+[tool] status: Pending
+[tool] status: InProgress
+[tool] status: Completed
+[tool] @rehearsal/playwright/browser_close
+[tool] Run Command
+[denied] tool permission approval is not supported in non-interactive mode. Use --trust-tools=run_command to auto-approve this tool, or --trust-all-tools to auto-approve every tool.
+[tool] status: Pending
+[tool] status: Failed: Run Command
+[tool] status: InProgress
+[tool] status: Completed
+I ran the community fair and the paired comparison. The engine counts time in integer milliseconds, and it never reads the wall clock.
+**Headline** (Compare tab, baseline vs. "extra check-in staff")
+- "Mean queue wait drops by 297.4 s."
+- "Lower in 30 of 30 runs."
+- The only change between the plans is "Station "Check-in desk": servers 1 → 2".
+- The app showed "30 of 30 paired runs complete".
+**Run counts and metric cards (n = 30)**
+- Mean queue wait: baseline 305.3 s, candidate 7.9 s. Mean change is -297.4 s, with a range of -360.3 s to -258.7 s. The app labels that range "variation across these simulated runs". It is not a confidence interval.
+- 95th percentile queue wait: baseline 581.7 s, candidate 28.2 s. The change is -553.5 s, lower in 30 of 30 runs.
+- Maximum queue length: baseline 41.5 people, candidate 5.6 people.
+- Staff-hours: baseline 2.00 h, candidate 2.67 h (+0.67 h). The app defines no better direction for this one.
+- Completed by closing: 120 in both plans, with no change. The app says the same simulated attendees and random draws were used in both.
+**Baseline single run (replication 0)**
+- All 120 attendees completed. Mean queue wait was 373.2 s.
+- The scenario hash is `ecb84997f5f087c117d7cc4eb620586a3efc8c7cc44d337c685f70091d069c4d`.
+- The candidate hash is `0374be6bd3f84037fb0d509a793bd21566dfae5400b1e9a80aada8dc0134cbf2`.
+**Units and clock**
+- The engine counts time as integer milliseconds. Seconds are converted once, where input is checked, and never inside the engine.
+- The engine never reads the wall clock and never calls `Math.random`. Every random draw comes from a stream keyed by the seed, replication, attendee and station.
+- The same scenario, seed and replication therefore give the same result, byte for byte.
+- The "30 paired runs took 0.8 s on this device" line is the page's own timing display, not engine time.
+These are scenario results under the app's assumptions, not a forecast. The Harbor Hall Community Fair and its 120 attendees are fictional and illustrative. I'm not recommending a staffing level.
+**Cleanup**
+- I asked the browser tool to save one snapshot to `snap-run.md` in the workspace. I then couldn't read the file back, so it may not exist.
+- My shell checks for it were not permitted, so I couldn't confirm either way. Please check the workspace root for `snap-run.md` and the `.playwright-mcp` folder, which holds the tool's snapshots.

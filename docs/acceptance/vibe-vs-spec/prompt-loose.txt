@@ -1,0 +1,11 @@
+Add this feature to the app in this folder.
+
+Rehearsal needs a way to share a plan as a link. A person who has built or edited a plan on the Plan screen presses a button named "Copy share link". The link holds the whole scenario (it is the same scenario the JSON save writes), so nobody has to send a file. When someone opens the link, the app loads that plan on the Plan screen, as if it had been opened from a JSON file, with the usual dialog or message for a plan that has warnings. No server is involved: the link is the app address followed by a hash (#) part that holds the scenario, compressed and encoded in the browser. The status region says "Share link copied" after the copy. If the plan is too big for a link (over 6,000 characters in all), nothing is copied and the status region says "This plan is too large to share as a link. Save it as a JSON file instead." If a link is damaged or holds a scenario the app refuses, the app stays on the landing screen and the status region says why in plain words, and nothing crashes. The link never leaves the browser: opening it makes no request to any other address.
+
+Rules for this run.
+- Use npm. Add no package. Do not run playwright install. Every browser test runs headless; never open a window. Do not change the preview ports (4273, 4274).
+- Plain words, no dashes between words in anything a user reads. No file names a prize, a budget or another project.
+- Do not run git commit, git switch, git branch, git checkout, git stash or git reset.
+- UTF-8 with no byte order mark, LF line endings.
+- Do not run the full npm run test:e2e. Run npm run verify at the end; it must exit 0. If a check fails twice after your repairs, stop and report the item and the failing output. Never weaken a test to pass.
+- Then list what you built and the results.
