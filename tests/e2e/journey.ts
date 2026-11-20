@@ -66,9 +66,9 @@ export async function keyboardJourney(page: Page): Promise<void> {
   await backTabTo(page, 'Compare', { checkFocus: true });
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { level: 1, name: 'Compare scenarios' })).toBeFocused();
-  await tabTo(page, `Baseline: ${title}`, { checkFocus: true });
+  await tabTo(page, `Use as baseline: ${title}`, { checkFocus: true });
   await page.keyboard.press('Enter');
-  await tabTo(page, 'Candidate: Harbor Hall Community Fair: extra check-in staff', { checkFocus: true });
+  await tabTo(page, 'Use as candidate: Harbor Hall Community Fair: extra check-in staff', { checkFocus: true });
   await page.keyboard.press('Enter');
   await tabTo(page, 'Run comparison', { checkFocus: true });
   await page.keyboard.press('Enter');
