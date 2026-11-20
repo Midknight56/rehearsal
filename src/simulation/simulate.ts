@@ -25,6 +25,14 @@ export class ScenarioInvalidError extends Error {
   }
 }
 
+/**
+ * Runs one replication of a scenario and returns its result.
+ *
+ * Time inside the engine is whole milliseconds. The same scenario, replication
+ * and options give the same result byte for byte. The engine never reads the
+ * wall clock. It throws `ScenarioInvalidError` for a scenario the validator
+ * refuses.
+ */
 export function simulate(scenario: Scenario, replication: number, options: SimulateOptions): RunResult {
   const validated = validateScenario(scenario);
   if (!validated.ok) throw new ScenarioInvalidError(validated.issues);

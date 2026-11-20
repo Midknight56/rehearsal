@@ -34,6 +34,7 @@ export function describeNode(input: Pick<Scenario, 'layout' | 'stations'>, node:
   return `${node.kind} (${x},${y})`;
 }
 
+/** Returns a PathCache with the grid paths between every ordered pair of entrance, station and exit nodes, each found with a breadth first search on the grid. */
 export function createPathCache(input: CacheInput): PathCache {
   const blockedCells = [...input.layout.blockedCells].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
   const stations = [...input.stations].sort((a, b) => byCodeUnit(a.id, b.id));
