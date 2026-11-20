@@ -1,5 +1,9 @@
 # Rehearsal
 
+**Try it now: https://rehearsal.midknight-ent-llc.workers.dev** (no account). **Film: https://youtu.be/uZS-yUdA6-I** (135 s).
+
+![Rehearsal landing: the community fair replaying in the game view, with the measured result line](docs/acceptance/img/landing-preview-1920x1080.png)
+
 Rehearsal is our Frankenstein entry. It stitches together a chimera of technologies into one app: a spreadsheet import, a grid floor plan editor, a discrete event queue simulation and a 2D game engine replay. Bringing these seemingly incompatible elements together builds something unexpectedly powerful: a dress rehearsal for the line at your event's door, where two staffing or layout choices can be compared before the day. Kiro wrote the code through spec driven development, from three specs, in the Kiro CLI.
 
 Category: Frankenstein.
