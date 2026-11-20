@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "rehearsal",
+  "version": "0.1.0",
+  "description": "Rules of the Rehearsal queue simulation for event check in lines: units, seeded runs, the model limits and the claims policy, plus a headless browser server that lets Kiro run the app and read a paired comparison of two staffing plans.",
+  "author": {
+    "name": "Rehearsal"
+  },
+  "keywords": ["queue simulation", "event staffing", "check in line", "paired comparison", "discrete event", "what if", "event rehearsal", "staffing plan"],
+  "license": "MIT"
+}
