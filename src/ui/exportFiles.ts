@@ -2,6 +2,7 @@
 // Every file text comes from src/exports; this module only picks the data, names the file and hands it to the browser.
 // Nothing is uploaded: downloads and new tabs use Blob URLs.
 import { scenarioHash } from '../domain/hash';
+import { renderRunSheet } from '../exports/run-sheet';
 import { createPathCache } from '../spatial/path-cache';
 import { downloadText, openHtmlInNewTab } from './download';
 import { blockedMessage } from './run/controller';
@@ -49,7 +50,6 @@ export async function openRunSheetTab(store: EditorStore): Promise<void> {
     return;
   }
   const hash = store.getState().hash ?? (await scenarioHash(scenario));
-  const { renderRunSheet } = await import('../exports/run-sheet');
   openHtmlInNewTab(renderRunSheet(scenario, { generatedAt: nowIso(), scenarioHash: hash }).html);
   store.setStatus('Opened the run sheet in a new tab.');
 }
