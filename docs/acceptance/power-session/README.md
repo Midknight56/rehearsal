@@ -37,3 +37,7 @@ The 297.4 s figure matches `README.md` and the 30 paired runs of the Crew app (`
 ## What did not work
 
 The session asked the browser tool to save one snapshot to a file and could not read it back. It said so in its answer and asked for the workspace to be checked. The run folder held only `session-output.txt` afterwards.
+
+## Recipe repaired after the session
+
+The session above ran on the live app before the axe scan work changed the accessible names of the Compare pick buttons (`Use as baseline: <title>` until chosen). The hook `verify-on-stop` then reported a failing test in `tests/kiro/extensions.test.ts` (case 3.4) after the merge, because the skill recipe still named the old buttons. The recipe (steps 5 and 6 of `power/rehearsal/skills/simulation-rules/SKILL.md`) and the test were repaired and `npx vitest run tests/kiro` passes (17 tests). The session was not run again with the repaired recipe.

@@ -139,11 +139,25 @@ describe('3 the skill simulation-rules', () => {
       expect(sources, `${label} in src/ui`).toContain(label);
       expect(text, label).toContain(label);
     }
-    expect(sources).toContain('Baseline: ${');
-    expect(sources).toContain('Candidate: ${');
-    expect(text).toContain('Baseline: Harbor Hall Community Fair: baseline');
-    expect(text).toContain('Candidate: Harbor Hall Community Fair: extra check-in staff');
-    for (const title of ['baseline', 'extra check-in staff']) {
+    // The pick buttons read `Use as <side>: <title>` until chosen and `<Side>: <title>` after. Read the template, then require the
+    // recipe to name the label the button has when it is clicked. On first opening Compare the current tab (the baseline plan) is the
+    // candidate and the first other tab (extra check-in staff) is the baseline, so neither wanted pick is chosen yet.
+    const pick = read('src', 'ui', 'compare', 'PickScenarios.tsx');
+    const labelOf = (side: 'baseline' | 'candidate', chosen: boolean, title: string): string => {
+      const m = pick.match(new RegExp('aria-label=\\{`\\$\\{' + side + 'Key === key \\? \'([^\']+)\' : \'([^\']+)\'\\}: \\$\\{scenario\\.title\\}`\\}'));
+      expect(m, `aria-label template of the ${side} pick button`).not.toBeNull();
+      return `${chosen ? (m as RegExpMatchArray)[1] : (m as RegExpMatchArray)[2]}: ${title}`;
+    };
+    const baselineTitle = 'Harbor Hall Community Fair: baseline';
+    const candidateTitle = 'Harbor Hall Community Fair: extra check-in staff';
+    const baselineLabel = labelOf('baseline', false, baselineTitle);
+    const candidateLabel = labelOf('candidate', false, candidateTitle);
+    expect(baselineLabel).toBe(`Use as baseline: ${baselineTitle}`);
+    expect(candidateLabel).toBe(`Use as candidate: ${candidateTitle}`);
+    expect(text).toContain('`' + baselineLabel + '`');
+    expect(text).toContain('`' + candidateLabel + '`');
+    expect(text).not.toContain('`Baseline: ' + baselineTitle + '`');
+    expect(text).not.toContain('`Candidate: ' + candidateTitle + '`');    for (const title of ['baseline', 'extra check-in staff']) {
       expect(read('public', 'examples', 'harbor-hall', title === 'baseline' ? 'baseline.json' : 'plus-one-checkin.json')).toContain(`Harbor Hall Community Fair: ${title}`);
     }
   });

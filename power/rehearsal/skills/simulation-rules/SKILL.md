@@ -51,8 +51,8 @@ The server is `playwright`. Ask the user for the address where the app runs. Use
 2. `browser_click` the button Try the community fair. The three example plans open as tabs.
 3. `browser_click` the button Simulate. Wait with `browser_wait_for` until the run finishes, then `browser_snapshot` to read the result tables.
 4. `browser_click` the Compare tab in the Screens navigation.
-5. `browser_click` the toggle named `Baseline: Harbor Hall Community Fair: baseline`.
-6. `browser_click` the toggle named `Candidate: Harbor Hall Community Fair: extra check-in staff`.
+5. `browser_click` the toggle named `Use as baseline: Harbor Hall Community Fair: baseline`. When Compare first opens, this plan is the candidate and the extra staff plan is the baseline, so the name starts with Use as.
+6. `browser_click` the toggle named `Use as candidate: Harbor Hall Community Fair: extra check-in staff`.
 7. `browser_click` Run comparison. It stays inactive while both sides are the same plan.
 8. `browser_wait_for` the text `30 of 30 paired runs complete`.
 9. `browser_snapshot`, then read the region named Headline: a sentence such as the change in mean queue wait in seconds, and a line with the number of runs in which it was lower, out of 30. Also read the metric cards, which show Baseline, Candidate and n.
