@@ -12,6 +12,7 @@ import { CompareScreen } from './ui/compare/CompareScreen';
 import { createRunController, type RunController } from './ui/run/controller';
 import { createGameView } from './replay/gameView';
 import { createSimulationClient, type SimulationClient } from './workers/client';
+import { ShareLinkOpener } from './ui/import/ShareLinkOpener';
 import { Landing } from './ui/landing/Landing';
 import { PlanScreen } from './ui/plan/PlanScreen';
 import { PrintScreen } from './ui/print/PrintScreen';
@@ -78,6 +79,7 @@ export function App(props: { fetchImpl?: typeof fetch; store?: EditorStore; clie
   return (
     <>
       <StatusRegion store={store} />
+      <ShareLinkOpener store={store} />
       {screen === 'landing' ? (
         <Landing store={store} saved={saved} preview={previewDeps} {...(props.fetchImpl === undefined ? {} : { fetchImpl: props.fetchImpl })} />
       ) : screen === 'print' ? (
