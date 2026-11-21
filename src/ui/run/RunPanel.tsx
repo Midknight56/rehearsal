@@ -6,6 +6,7 @@ import { STALE_LABEL, resultsStatus } from '../state/selectors';
 import type { EditorStore } from '../state/store';
 import { useEditorState } from '../state/useEditorState';
 import type { RunController } from './controller';
+import { invalidFields, invalidRunMessage } from '../plan/invalidFields';
 
 export function RunPanel({ store, controller }: { store: EditorStore; controller: RunController }): ReactElement {
   const state = useEditorState(store);
@@ -14,6 +15,12 @@ export function RunPanel({ store, controller }: { store: EditorStore; controller
   const waitingForNext = useRef(false);
 
   const startNow = async (): Promise<void> => {
+    // A field marked in red holds a value the scenario never took; running now would run the old value.
+    const blocked = invalidRunMessage(invalidFields());
+    if (blocked !== null) {
+      store.dispatch({ type: 'run/blocked', message: blocked });
+      return;
+    }
     const snapshot = store.getState().scenario;
     const tabIndex = store.getState().currentIndex;
     const hash = store.getState().hash ?? (await scenarioHash(snapshot));

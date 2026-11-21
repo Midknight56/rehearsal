@@ -55,7 +55,7 @@ async function openedPage(context: BrowserContext, page: Page, testId: string): 
 }
 
 async function compare(page: Page): Promise<void> {
-  await screenButtons(page).getByRole('button', { name: 'Compare', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
   await expect(screenButtons(page).getByRole('button', { name: 'Back to plan' })).toBeVisible();
 }
 

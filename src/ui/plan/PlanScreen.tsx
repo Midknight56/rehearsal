@@ -16,7 +16,7 @@ import { RunPanel } from '../run/RunPanel';
 import type { RunController } from '../run/controller';
 import { createPrefsStore, type Prefs } from '../../storage/prefs';
 import { useHeadingFocus } from '../focus';
-import { focusSimulate, openCompare, takePendingGameViewFocus } from '../navigation';
+import { focusSimulate, takePendingGameViewFocus } from '../navigation';
 import { OpenJson } from '../import/OpenJson';
 import type { SavedScenarios } from '../saved';
 import { SaveBar } from '../SaveBar';
@@ -24,9 +24,11 @@ import { SaveError } from '../SaveError';
 import { ShareLinkButton } from '../ShareLinkButton';
 import { PrintControls } from '../print/PrintControls';
 import { TopBar } from '../TopBar';
+import { HIDDEN_RESULTS_TEXT, useInvalidFields } from './invalidFields';
 
 export function PlanScreen({ store, controller, saved }: { store: EditorStore; controller: RunController; saved?: SavedScenarios }): ReactElement {
   const state = useEditorState(store);
+  const invalid = useInvalidFields();
   useHeadingFocus();
   // Opened by the Game view tab with no run: the section is only the Simulate button, so focus goes there. With a run, the game view panel moves focus to its own heading once it has loaded the trace.
   useEffect(() => {
@@ -66,12 +68,20 @@ export function PlanScreen({ store, controller, saved }: { store: EditorStore; c
 
   return (
     <>
+    {/* The Compare tab opens Compare; a second Compare button beside it read as a different thing to first-time testers. */}
     <TopBar store={store}>
-      <button type="button" onClick={() => openCompare(store)}>Compare</button>
       <PrintControls store={store} part="sheet" />
     </TopBar>
     <main>
       <h1>{state.scenario.title}</h1>
+      <div className="plan-steps">
+        <ol aria-label="How to use this page">
+          <li>Change the plan in the tables.</li>
+          <li>Activate Simulate, under the tables, to watch one run.</li>
+          <li>Open Compare to test a change.</li>
+        </ol>
+        <button type="button" onClick={() => focusSimulate()}>Go to the run</button>
+      </div>
       <ScenarioTabs store={store} />
       <div className="toolbar" role="group" aria-label="Edit">
         <button type="button" aria-disabled={canUndo ? undefined : 'true'} onClick={() => { if (canUndo) store.dispatch({ type: 'undo' }); }}>Undo</button>
@@ -112,8 +122,11 @@ export function PlanScreen({ store, controller, saved }: { store: EditorStore; c
       </div>
       <section className="panel" aria-label="Run and results">
         <RunPanel store={store} controller={controller} />
-        <GameViewPanel store={store} />
-        <ResultTables store={store} />
+        {invalid.length === 0 ? null : <p className="field-error" data-testid="results-hidden">{HIDDEN_RESULTS_TEXT}</p>}
+        <div hidden={invalid.length > 0 ? true : undefined}>
+          <GameViewPanel store={store} />
+          <ResultTables store={store} />
+        </div>
       </section>
     </main>
     </>

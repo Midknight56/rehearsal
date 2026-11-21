@@ -17,7 +17,7 @@ test('timing.pairedMs from the Compare screen, three runs', async ({ page }) => 
   const readings: number[] = [];
   for (let i = 0; i < 3; i += 1) {
     await openFair(page);
-    await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
     await page.getByTestId('pick-baseline-baseline').click();
     await page.getByTestId('pick-candidate-plus-one-checkin').click();
     await page.getByTestId('run-comparison').click();

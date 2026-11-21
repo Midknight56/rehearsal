@@ -101,7 +101,7 @@ for (const size of SIZES) {
 
     test('3. Compare numbers stay with their unit and the large value fits its card', async ({ page }) => {
       await openFair(page);
-      await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+      await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
       await page.getByTestId('pick-baseline-baseline').click();
       await page.getByTestId('pick-candidate-plus-one-checkin').click();
       await page.getByTestId('run-comparison').click();
@@ -125,7 +125,7 @@ for (const size of SIZES) {
 
     test('5. no two text labels of the Compare slope chart overlap and each lies inside the chart', async ({ page }) => {
       await openFair(page);
-      await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+      await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
       await page.getByTestId('pick-baseline-baseline').click();
       await page.getByTestId('pick-candidate-plus-one-checkin').click();
       await page.getByTestId('run-comparison').click();

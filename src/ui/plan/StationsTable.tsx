@@ -12,6 +12,17 @@ import { CommitInput, PairInput, attempt } from './fields';
 const triple = (s: Station): [number, number, number] =>
   s.service.kind === 'constant' ? [s.service.seconds, s.service.seconds, s.service.seconds] : [s.service.minS, s.service.modeS, s.service.maxS];
 
+const COLUMNS = ['Station ID', 'Label', 'Servers', 'Service min (s)', 'Service mode (s)', 'Service max (s)', 'Cell (x, y)', 'Actions'] as const;
+
+/** Plain words for every column, shown under the table so a first-time reader needs no other page. */
+export const STATIONS_HELP: readonly (readonly [string, string])[] = [
+  ['Station ID', 'a short name for the station; the Route column of Arrivals uses it.'],
+  ['Label', 'the name shown on the floor plan and in the results.'],
+  ['Servers', 'how many staff serve this station at the same time, from 1 to 20. Everyone waits in one line for the next free one.'],
+  ['Service min, mode and max (s)', 'the shortest, the most usual and the longest time one person takes to be served, in seconds. Make all three equal and everyone takes that same time.'],
+  ['Cell (x, y)', 'the square of the floor plan where the station stands: x counts squares to the right from the left edge, y counts squares down from the top, both from 0.'],
+];
+
 export function StationsTable({ store }: { store: EditorStore }): ReactElement {
   const state = useEditorState(store);
   const { scenario } = state;
@@ -29,11 +40,11 @@ export function StationsTable({ store }: { store: EditorStore }): ReactElement {
 
   return (
     <div className="table-scroll">
-      <table>
+      <table className="stack">
         <caption>Stations</caption>
         <thead>
           <tr>
-            {['Station ID', 'Label', 'Servers', 'Service min (s)', 'Service mode (s)', 'Service max (s)', 'Cell (x, y)', 'Actions'].map((h) => (
+            {COLUMNS.map((h) => (
               <th key={h} scope="col">{h}</th>
             ))}
           </tr>
@@ -44,9 +55,9 @@ export function StationsTable({ store }: { store: EditorStore }): ReactElement {
             const [min, mode, max] = triple(s);
             return (
               <tr key={s.id} aria-selected={state.selection.kind === 'station' && state.selection.id === s.id ? true : undefined}>
-                <td><CommitInput label={`station_id of ${s.id}`} size="id" value={s.id} onCommit={(t) => attempt(store, { type: 'station/rename', id: s.id, newId: t.trim() })} /></td>
-                <td><CommitInput label={`label of ${s.id}`} size="wide" value={s.label} onCommit={(t) => attempt(store, { type: 'station/set', id: s.id, patch: { label: t } })} /></td>
-                <td>
+                <td data-label={COLUMNS[0]}><CommitInput label={`station_id of ${s.id}`} size="id" value={s.id} onCommit={(t) => attempt(store, { type: 'station/rename', id: s.id, newId: t.trim() })} /></td>
+                <td data-label={COLUMNS[1]}><CommitInput label={`label of ${s.id}`} size="wide" value={s.label} onCommit={(t) => attempt(store, { type: 'station/set', id: s.id, patch: { label: t } })} /></td>
+                <td data-label={COLUMNS[2]}>
                   <CommitInput
                     label={`servers of ${s.id}`}
                     value={String(s.servers)}
@@ -58,10 +69,10 @@ export function StationsTable({ store }: { store: EditorStore }): ReactElement {
                     }}
                   />
                 </td>
-                <td><CommitInput label={`service_min_s of ${s.id}`} value={String(min)} inputMode="decimal" width="4em" onCommit={service(s, 0)} /></td>
-                <td><CommitInput label={`service_mode_s of ${s.id}`} value={String(mode)} inputMode="decimal" width="4em" onCommit={service(s, 1)} /></td>
-                <td><CommitInput label={`service_max_s of ${s.id}`} value={String(max)} inputMode="decimal" width="4em" onCommit={service(s, 2)} /></td>
-                <td>
+                <td data-label={COLUMNS[3]}><CommitInput label={`service_min_s of ${s.id}`} value={String(min)} inputMode="decimal" width="4em" onCommit={service(s, 0)} /></td>
+                <td data-label={COLUMNS[4]}><CommitInput label={`service_mode_s of ${s.id}`} value={String(mode)} inputMode="decimal" width="4em" onCommit={service(s, 1)} /></td>
+                <td data-label={COLUMNS[5]}><CommitInput label={`service_max_s of ${s.id}`} value={String(max)} inputMode="decimal" width="4em" onCommit={service(s, 2)} /></td>
+                <td data-label={COLUMNS[6]}>
                   <PairInput
                     labelX={`cell_x of ${s.id}`}
                     labelY={`cell_y of ${s.id}`}
@@ -75,7 +86,8 @@ export function StationsTable({ store }: { store: EditorStore }): ReactElement {
                   />
                   {other === undefined ? null : <span className="field-error">{`Cell (${s.cell[0]}, ${s.cell[1]}) is shared with ${other.label}.`}</span>}
                 </td>
-                <td>
+                <td data-label={COLUMNS[7]}>
+                  <div className="cell-actions">
                   <button type="button" aria-label={`Inspect ${s.id}`} onClick={() => store.dispatch({ type: 'select', selection: { kind: 'station', id: s.id } })}>Inspect</button>{' '}
                   <button
                     type="button"
@@ -87,6 +99,7 @@ export function StationsTable({ store }: { store: EditorStore }): ReactElement {
                   >
                     Delete
                   </button>
+                  </div>
                   {deleteRefusal?.id === s.id ? <span className="field-error">{deleteRefusal.text}</span> : null}
                 </td>
               </tr>
@@ -98,6 +111,11 @@ export function StationsTable({ store }: { store: EditorStore }): ReactElement {
         <button type="button" aria-label="Add station" aria-disabled={full ? 'true' : undefined} onClick={() => { if (!full) attempt(store, { type: 'station/add' }); }}>Add</button>{' '}
         <span className="muted">{`${scenario.stations.length} of ${LIMITS.maxStations} stations`}</span>
       </p>
+      <ul className="column-help" aria-label="What the stations columns mean">
+        {STATIONS_HELP.map(([term, text]) => (
+          <li key={term}><strong>{term}</strong>{`: ${text}`}</li>
+        ))}
+      </ul>
     </div>
   );
 }

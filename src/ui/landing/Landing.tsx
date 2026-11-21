@@ -66,6 +66,7 @@ export function Landing(props: { store: EditorStore; saved?: SavedScenarios; fet
           <button type="button" aria-expanded={showList} onClick={() => setListOpen((open) => !open)}>Open a saved scenario</button>
         ) : null}
       </div>
+      <p className="muted landing-files">A spreadsheet needs two sheets named Arrivals and Stations, or two CSV files, one for each; Download templates on the Plan screen gives files with the right columns. A scenario JSON is a file saved earlier with Export JSON.</p>
       {saved === undefined || !showList ? null : (
         <section aria-labelledby="saved-heading">
           <h2 id="saved-heading">Saved in this browser</h2>

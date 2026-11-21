@@ -368,7 +368,7 @@ td input:not([type="radio"]):not([type="checkbox"]) {
 .cell-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
 }
 
 .toolbar {
@@ -382,7 +382,7 @@ td input:not([type="radio"]):not([type="checkbox"]) {
 .tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 12px;
   list-style: none;
   margin: 0 0 8px;
   padding: 0;
@@ -652,7 +652,7 @@ dialog::backdrop {
 
 .chart-tick {
   fill: var(--ink-muted);
-  font: 400 11px var(--font-mono);
+  font: 400 12px var(--font-mono);
 }
 
 .waiting-chart svg {
@@ -1136,4 +1136,198 @@ input[type="range"]::-moz-range-thumb {
   input[type="range"] {
     flex-basis: 100%;
   }
+}
+/* Blind test fixes, 2026-11-20. The steps at the top of the Plan screen and the plain word help under the tables. */
+/* One row on a wide screen, so the floor plan still starts in the first view; a card of three lines on a phone. */
+.plan-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin: 0 0 12px;
+}
+
+.plan-steps ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 0;
+  padding: 0;
+  list-style-position: inside;
+  font-size: 15px;
+}
+
+.plan-steps li {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .plan-steps {
+    padding: 12px 16px;
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-card);
+  }
+
+  .plan-steps ol {
+    display: block;
+    padding-left: 22px;
+    list-style-position: outside;
+  }
+
+  .plan-steps li {
+    margin: 2px 0;
+  }
+}
+
+.column-help {
+  margin: 12px 0 0;
+  padding-left: 20px;
+  color: var(--ink-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.column-help li {
+  margin: 0 0 4px;
+}
+
+.column-help strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.column-note {
+  font-size: 14px;
+}
+
+/* The x and y inputs of a cell keep 12 px between them. */
+.pair-input {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.pair-input > .field-error {
+  flex-basis: 100%;
+}
+
+/* Phone: a table of class stack shows one card per row, each cell on its own line under its column name, so nothing runs
+   past the screen edge. The header row stays in the page for a screen reader. */
+@media (max-width: 640px) {
+  table.stack,
+  table.stack > tbody,
+  table.stack > tbody > tr {
+    display: block;
+    width: 100%;
+  }
+
+  table.stack > caption {
+    display: block;
+  }
+
+  table.stack > caption.visually-hidden {
+    display: table-caption;
+  }
+
+  table.stack > thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  table.stack > tbody > tr {
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  table.stack > tbody > tr > th,
+  table.stack > tbody > tr > td {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+    padding: 6px 0;
+    border-bottom: 0;
+    overflow-wrap: anywhere;
+  }
+
+  table.stack > tbody > tr > th {
+    font-weight: 600;
+  }
+
+  table.stack > tbody > tr > [data-label]::before {
+    content: attr(data-label);
+    color: var(--ink-muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+
+  table.stack > tbody > tr > td.empty-cell {
+    display: none;
+  }
+
+  table.stack > tbody > tr > td > .field-error {
+    flex-basis: 100%;
+  }
+
+  table.stack td input:not([style]) {
+    flex: 1 1 10em;
+    width: auto;
+    min-width: 0;
+  }
+
+  table.stack .cell-actions {
+    gap: 12px;
+  }
+}
+/* Every control keeps 12 px from its neighbours: rows of fields, table cells and the scenario picks. */
+.panel p:has(> label > input, > input, > .pair-input, > label > select) {
+  margin-bottom: 12px;
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.control-row > .field-error {
+  flex-basis: 100%;
+}
+
+td:has(input, select, button) {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.pick-scenarios td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+/* The three speeds are three controls, so they keep 12 px between them like every other control. */
+.speed {
+  gap: 12px;
+}
+
+.speed label,
+.speed label + label,
+.speed label:nth-of-type(1),
+.speed label:nth-of-type(3) {
+  border-left-width: 1.5px;
+  border-radius: var(--radius);
+}
+
+.speed > span {
+  margin-right: 0;
 }

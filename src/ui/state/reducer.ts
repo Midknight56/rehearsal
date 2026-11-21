@@ -231,15 +231,17 @@ function freshId(prefix: string, taken: string[]): string {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Compare picks: the current tab is the candidate and the first other tab the baseline, unless the picks already name open tabs.
+// Compare picks: the first tab is the baseline and the current tab the candidate (the next tab when the first is current), so the
+// first comparison reads in the same direction as the landing sentence. Picks that already name open tabs are kept.
 
 function withDefaultPicks(state: EditorState): EditorState['compare'] {
   const open = (key: TabKey | null): key is TabKey => key !== null && state.tabKeys.includes(key);
   const { baselineKey, candidateKey } = state.compare;
   if (open(baselineKey) && open(candidateKey)) return state.compare;
+  const first = state.tabKeys[0] as TabKey;
   const current = state.tabKeys[state.currentIndex] as TabKey;
-  const other = state.tabKeys.find((key) => key !== current) ?? current;
-  return { ...state.compare, baselineKey: open(baselineKey) ? baselineKey : other, candidateKey: open(candidateKey) ? candidateKey : current };
+  const other = current !== first ? current : (state.tabKeys.find((key) => key !== first) ?? first);
+  return { ...state.compare, baselineKey: open(baselineKey) ? baselineKey : first, candidateKey: open(candidateKey) ? candidateKey : other };
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

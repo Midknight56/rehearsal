@@ -217,7 +217,7 @@ test.describe('motion (Motion section of the design)', () => {
 
   async function compare(page: Page): Promise<void> {
     await openFair(page);
-    await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
     await page.getByTestId('pick-baseline-baseline').click();
     await page.getByTestId('pick-candidate-plus-one-checkin').click();
     await page.getByTestId('run-comparison').click();

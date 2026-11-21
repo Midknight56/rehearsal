@@ -93,14 +93,31 @@
 
   .run-sheet table {
     font-size: 13px;
-    width: max-content;
-    min-width: 100%;
   }
 
-  .run-sheet .hash-line {
-    white-space: nowrap;
-    overflow-x: auto;
+  .run-sheet table.stack > tbody > tr {
+    border-bottom: 1px solid #8a928e;
   }
+
+  .run-sheet table.stack > tbody > tr > th,
+  .run-sheet table.stack > tbody > tr > td {
+    border: 0;
+    padding: 4px 0;
+  }
+
+  .run-sheet table.stack > tbody > tr > [data-label]::before {
+    color: var(--print-ink);
+  }
+
+  .run-sheet .table-scroll {
+    overflow-x: visible;
+  }
+}
+
+/* The hash wraps between its four 16 character pieces, never inside one. */
+.run-sheet .hash-part {
+  display: inline-block;
+  white-space: nowrap;
 }
 
 @page {

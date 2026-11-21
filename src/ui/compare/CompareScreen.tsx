@@ -2,7 +2,8 @@
 // change list, the metric cards, the station table and the replay with the baseline ghost, and saves a summary. It computes
 // nothing: every number comes from the Comparison and every sentence from src/comparison/labels.ts.
 import { useMemo, useState, type ReactElement } from 'react';
-import { STALE_TEXT, saveErrorText, timingText } from '../../comparison/labels';
+import { STALE_TEXT, RANGE_LABEL, saveErrorText, timingText } from '../../comparison/labels';
+import { REPLICATIONS } from '../../comparison/replications';
 import { toComparisonSummary } from '../../comparison/summary';
 import { browserStorage } from '../../storage/browser';
 import { createComparisonStore } from '../../storage/comparisons';
@@ -29,6 +30,15 @@ import type { CompareController } from './controller';
 import { compareStatusText, isCompareStale } from './status';
 
 type Props = { store: EditorStore; controller: CompareController; storage?: Storage | null; saved?: SavedScenarios; createView?: typeof createGameView };
+
+/** Plain words for the terms of this screen, shown beside the headline. */
+export const COMPARE_HELP: readonly (readonly [string, string])[] = [
+  ['Baseline and candidate', 'the baseline is the plan you start from; the candidate is the changed copy. The list above says what changed.'],
+  ['A paired run', `each of the ${REPLICATIONS} runs gives the baseline and the candidate the same simulated attendees and the same random draws, so the two results of a pair differ only by the changes listed.`],
+  ['Mean change', `the candidate minus the baseline, averaged over the ${REPLICATIONS} pairs. A minus sign means the candidate is lower.`],
+  [`The range, ${RANGE_LABEL}`, `the middle of the ${REPLICATIONS} pair differences, from the 10th to the 90th percentile. It shows how much the change moved from run to run.`],
+  ['p95', 'the time that 95 of every 100 attendees stayed within; the slowest 5 waited longer.'],
+];
 
 export function CompareScreen({ store, controller, storage, saved: savedProp, createView }: Props): ReactElement {
   const state = useEditorState(store);
@@ -134,6 +144,11 @@ export function CompareScreen({ store, controller, storage, saved: savedProp, cr
                 {headline.note === null ? null : <p className="muted">{headline.note}</p>}
               </section>
             )}
+            <ul className="column-help" aria-label="How to read this comparison">
+              {COMPARE_HELP.map(([term, text]) => (
+                <li key={term}><strong>{term}</strong>{`: ${text}`}</li>
+              ))}
+            </ul>
             {slopePairs === null ? null : <SlopeChart pairs={slopePairs} />}
             {comparison === null ? null : (
               <div className="toolbar">

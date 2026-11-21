@@ -102,7 +102,7 @@ for (const size of SIZES) {
 
     test('Compare after a 30 run comparison', async ({ page }) => {
       await openFair(page);
-      await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+      await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
       await page.getByTestId('pick-baseline-baseline').click();
       await page.getByTestId('pick-candidate-plus-one-checkin').click();
       await page.getByTestId('run-comparison').click();
@@ -180,9 +180,11 @@ test.describe('tab bar at 1920 x 1080', () => {
     expect(await page.evaluate(() => window.scrollY)).toBe(0);
   });
 
-  test('keeps the Compare, Print run sheet and Back to plan buttons of each screen, with the same behaviour', async ({ page }) => {
+  // Blind test fixes 2026-11-20: the Plan screen's second Compare button was removed; the Compare tab is the one Compare control.
+  test('keeps the Print run sheet and Back to plan buttons of each screen, with the same behaviour', async ({ page }) => {
     await openFair(page);
-    await toolbar(page).getByRole('button', { name: 'Compare', exact: true }).click();
+    await expect(toolbar(page).getByRole('button', { name: 'Compare', exact: true })).toHaveCount(0);
+    await tab(page, 'Compare').click();
     await expect(page.getByRole('heading', { level: 1, name: 'Compare scenarios' })).toBeFocused();
     expect(await currentTabs(page)).toEqual(['Compare']);
     await toolbar(page).getByRole('button', { name: 'Back to plan' }).click();
@@ -241,7 +243,7 @@ test.describe('tab bar at 1920 x 1080', () => {
       await page.keyboard.press('Tab');
       order.push((await page.evaluate(() => document.activeElement?.textContent ?? '')).trim());
     }
-    expect(order).toEqual(['Plan', 'Game view', 'Compare', 'Run sheet', 'Compare', 'Print run sheet']);
+    expect(order).toEqual(['Plan', 'Game view', 'Compare', 'Run sheet', 'Print run sheet', 'Go to the run']);
   });
 
   test('has no cross fade under reduced motion, and a 150 ms fade otherwise', async ({ page }) => {

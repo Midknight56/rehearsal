@@ -8,7 +8,7 @@ const PRESENCE = { both: '', 'baseline-only': ' (baseline only)', 'candidate-onl
 export function StationTable({ view }: { view: CompareView }): ReactElement {
   return (
     <div className="table-scroll">
-      <table>
+      <table className="stack">
         <caption>Stations compared</caption>
         <thead>
           <tr>
@@ -24,10 +24,10 @@ export function StationTable({ view }: { view: CompareView }): ReactElement {
             station.metrics.map((m) => (
               <tr key={m.key}>
                 <th scope="row">{`${station.label}${PRESENCE[station.presence]}`}</th>
-                <td>{m.label}</td>
-                <td>{`${formatMean(m.baselineMean, m.unit)}${m.conditioned ? '*' : ''}`}</td>
-                <td>{`${formatMean(m.candidateMean, m.unit)}${m.conditioned ? '*' : ''}`}</td>
-                <td>{formatChange(m.meanChange, m.unit)}</td>
+                <td data-label="Metric">{m.label}</td>
+                <td data-label="Baseline mean">{`${formatMean(m.baselineMean, m.unit)}${m.conditioned ? '*' : ''}`}</td>
+                <td data-label="Candidate mean">{`${formatMean(m.candidateMean, m.unit)}${m.conditioned ? '*' : ''}`}</td>
+                <td data-label="Mean change">{formatChange(m.meanChange, m.unit)}</td>
               </tr>
             )),
           )}

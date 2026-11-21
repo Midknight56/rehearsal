@@ -7,8 +7,16 @@ import { STALE_LABEL, resultsStatus } from '../state/selectors';
 import type { EditorStore } from '../state/store';
 import { useEditorState } from '../state/useEditorState';
 import { populationText } from './format';
+import { REPLICATIONS } from '../../comparison/replications';
 
 type Row = { label: string; metric: MetricValue };
+
+const STATION_COLUMNS = ['Station', 'Servers', 'Busy time', 'Utilization', 'Average queue (people)', 'Maximum queue (people)', 'Served (people)'] as const;
+
+/** What replication and the hash mean, in plain words, under the result heading. */
+export function resultsPlainText(replication: number): string {
+  return 'Replication ' + String(replication) + ' is ' + (replication === 0 ? 'the first' : 'one') + ' simulated run of this plan. Each replication draws its own random arrival and service times, so another one gives other numbers; Compare runs ' + String(REPLICATIONS) + ' of them for each plan. The hash below is the fingerprint of the plan that made these numbers: the same hash in the Assumptions panel means the numbers belong to the plan you see.';
+}
 
 export function ResultTables({ store }: { store: EditorStore }): ReactElement {
   const state = useEditorState(store);
@@ -52,6 +60,7 @@ export function ResultTables({ store }: { store: EditorStore }): ReactElement {
         {status === 'stale' ? ' ' : null}
         <span>Replication {result.replication}, one example run of the scenario as it was when Simulate was activated.</span>
       </p>
+      <p className="muted column-note">{resultsPlainText(result.replication)}</p>
       <p className="muted">
         {`Model version ${result.modelVersion}, seed ${result.baseSeed}, horizon ${result.horizonMs / 60_000} min, completion ${result.completion}, ${m.admitted} attendees admitted.`}
       </p>
@@ -60,7 +69,7 @@ export function ResultTables({ store }: { store: EditorStore }): ReactElement {
         <p>{`${result.unfinished.length} attendees were unfinished at the drain cap; values marked * are conditioned on the attendees who finished.`}</p>
       ) : null}
       <div className="table-scroll">
-        <table>
+        <table className="stack">
           <caption>Result metrics</caption>
           <thead>
             <tr>
@@ -74,20 +83,20 @@ export function ResultTables({ store }: { store: EditorStore }): ReactElement {
             {rows.map((row) => (
               <tr key={row.label}>
                 <th scope="row">{row.label}</th>
-                <td>{formatMetricValue(row.metric)}</td>
-                <td>{`${populationText(row.metric.population)}, n = ${row.metric.n}`}</td>
-                <td>{row.metric.note ?? ''}</td>
+                <td data-label="Value">{formatMetricValue(row.metric)}</td>
+                <td data-label="Counted over"><span>{`${populationText(row.metric.population)}, `}<span className="nb">{`n = ${row.metric.n}`}</span></span></td>
+                {row.metric.note === null ? <td className="empty-cell" /> : <td data-label="Note">{row.metric.note}</td>}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
       <div className="table-scroll">
-        <table>
+        <table className="stack">
           <caption>Station results</caption>
           <thead>
             <tr>
-              {['Station', 'Servers', 'Busy time', 'Utilization', 'Average queue (people)', 'Maximum queue (people)', 'Served (people)'].map((h) => (
+              {STATION_COLUMNS.map((h) => (
                 <th key={h} scope="col">{h}</th>
               ))}
             </tr>
@@ -96,12 +105,12 @@ export function ResultTables({ store }: { store: EditorStore }): ReactElement {
             {m.stations.map((s) => (
               <tr key={s.id}>
                 <th scope="row">{`${labelOf(s.id)} (${s.id})`}</th>
-                <td>{s.servers}</td>
-                <td>{formatMetricValue(s.busyMs)}</td>
-                <td>{formatMetricValue(s.utilization)}</td>
-                <td>{formatMetricValue(s.averageQueueLength)}</td>
-                <td>{formatMetricValue(s.maxQueueLength)}</td>
-                <td>{formatMetricValue(s.served)}</td>
+                <td data-label={STATION_COLUMNS[1]}>{s.servers}</td>
+                <td data-label={STATION_COLUMNS[2]}>{formatMetricValue(s.busyMs)}</td>
+                <td data-label={STATION_COLUMNS[3]}>{formatMetricValue(s.utilization)}</td>
+                <td data-label={STATION_COLUMNS[4]}>{formatMetricValue(s.averageQueueLength)}</td>
+                <td data-label={STATION_COLUMNS[5]}>{formatMetricValue(s.maxQueueLength)}</td>
+                <td data-label={STATION_COLUMNS[6]}>{formatMetricValue(s.served)}</td>
               </tr>
             ))}
           </tbody>

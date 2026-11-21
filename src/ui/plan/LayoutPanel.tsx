@@ -55,6 +55,7 @@ export function LayoutPanel({ store }: { store: EditorStore }): ReactElement {
         <PairInput labelX="Exit x" labelY="Exit y" value={layout.exit} parse={cellParse} parseError={cellParseError} onCommit={(cell) => attempt(store, { type: 'layout/set-exit', cell })} />
       </p>
       <h3>Blocked cells</h3>
+      <p className="muted column-note">Squares nobody can walk through, such as a wall or a stage. A line such as (16, 20) to (23, 23) means every square from column 16, row 20 to column 23, row 23. Type a column x and a row y below and activate Add cell to block one more.</p>
       <ul aria-label="Blocked cells">
         {rects.map((r) => {
           const label = rectLabel(r);
@@ -66,7 +67,7 @@ export function LayoutPanel({ store }: { store: EditorStore }): ReactElement {
           );
         })}
       </ul>
-      <p>
+      <p className="control-row">
         <input aria-label="Blocked cell x" inputMode="numeric" value={x} style={{ width: '4em' }} onChange={(e) => setX(e.target.value)} />{' '}
         <input aria-label="Blocked cell y" inputMode="numeric" value={y} style={{ width: '4em' }} onChange={(e) => setY(e.target.value)} />{' '}
         <button type="button" onClick={addCell}>Add cell</button>

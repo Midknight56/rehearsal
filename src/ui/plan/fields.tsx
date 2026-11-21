@@ -4,6 +4,7 @@ import { useEffect, useId, useState, type ReactElement } from 'react';
 import { refusal } from '../state/reducer';
 import type { EditorStore } from '../state/store';
 import type { EditorAction } from '../state/types';
+import { setInvalidField } from './invalidFields';
 
 /** The refusal text of an action (null when allowed), then the dispatch; the store announces a refusal in the status region. */
 export function attempt(store: EditorStore, action: EditorAction): string | null {
@@ -28,6 +29,11 @@ export function CommitInput(props: {
     setDraft(null);
     setError(null);
   }, [props.value]);
+  // While the field shows a refusal, Simulate is blocked and the old results are hidden (invalidFields.ts).
+  useEffect(() => {
+    setInvalidField(errorId, error === null ? null : { label: props.label, message: error });
+  }, [errorId, error, props.label]);
+  useEffect(() => () => setInvalidField(errorId, null), [errorId]);
   const commit = (): void => {
     if (draft === null || draft === props.value) {
       setDraft(null);
@@ -81,6 +87,10 @@ export function PairInput(props: {
     setY(null);
     setError(null);
   }, [key]);
+  useEffect(() => {
+    setInvalidField(errorId, error === null ? null : { label: props.labelX.replace(/^cell_x/, 'cell'), message: error });
+  }, [errorId, error, props.labelX]);
+  useEffect(() => () => setInvalidField(errorId, null), [errorId]);
   const commit = (): void => {
     if (x === null && y === null) return;
     const xt = x ?? String(props.value[0]);
@@ -112,6 +122,7 @@ export function PairInput(props: {
   };
   return (
     <span
+      className="pair-input"
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) commit();
       }}

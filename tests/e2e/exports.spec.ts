@@ -13,7 +13,7 @@ const HOSTILE = 'tests/comparison/fixtures/hostile.json';
 const dialog = (page: Page) => page.getByRole('dialog', { name: 'Review the scenario file' });
 
 async function openCompare(page: Page): Promise<void> {
-  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
   await expect(page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' })).toBeVisible();
 }
 

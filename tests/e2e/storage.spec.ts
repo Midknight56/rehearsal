@@ -120,7 +120,7 @@ test.describe('10.4 and 10.5 a failed save (matrix row 18)', () => {
 
 test.describe('10.6 the comparison summary', () => {
   async function compare(page: Page): Promise<void> {
-    await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+    await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
     await page.getByTestId('pick-baseline-baseline').click();
     await page.getByTestId('pick-candidate-plus-one-checkin').click();
     await page.getByTestId('run-comparison').click();

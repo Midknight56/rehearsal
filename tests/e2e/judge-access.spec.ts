@@ -21,7 +21,7 @@ test('judge access: no login, the three tabs, a complete comparison and same-ori
   await page.getByTestId('try-community-fair').click();
   for (const key of ['baseline', 'plus-one-checkin', 'shorter-route']) await expect(page.getByTestId(`scenario-tab-${key}`)).toBeVisible();
 
-  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
   await page.getByTestId('pick-baseline-baseline').click();
   await page.getByTestId('pick-candidate-plus-one-checkin').click();
   await page.getByTestId('run-comparison').click();

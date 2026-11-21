@@ -66,10 +66,11 @@ describe('12.1 the screen and its picks', () => {
     expect(STALE_TEXT).toBe(STALE_LABEL);
   });
 
-  it('preselects the current tab as candidate and the first other tab as baseline, one toggle pair per tab', async () => {
+  // Blind test fixes 2026-11-20: the first tab is the baseline, so the first comparison reads like the landing sentence.
+  it('preselects the first tab as baseline and the next tab as candidate when the first is current, one toggle pair per tab', async () => {
     await mount();
-    expect(screen.getByTestId('pick-candidate-baseline').getAttribute('aria-pressed')).toBe('true');
-    expect(screen.getByTestId('pick-baseline-plus-one-checkin').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('pick-baseline-baseline').getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByTestId('pick-candidate-plus-one-checkin').getAttribute('aria-pressed')).toBe('true');
     for (const key of ['baseline', 'plus-one-checkin', 'shorter-route']) {
       expect(screen.getByTestId(`pick-baseline-${key}`)).toBeTruthy();
       expect(screen.getByTestId(`pick-candidate-${key}`)).toBeTruthy();
@@ -79,7 +80,8 @@ describe('12.1 the screen and its picks', () => {
 
   it('keeps run-comparison focusable with aria-disabled while the picks are equal', async () => {
     await mount();
-    fireEvent.click(screen.getByTestId('pick-baseline-baseline'));
+    // The default baseline is the baseline tab, so picking it as candidate too makes the picks equal.
+    fireEvent.click(screen.getByTestId('pick-candidate-baseline'));
     const run = screen.getByTestId('run-comparison');
     expect(run.getAttribute('aria-disabled')).toBe('true');
     expect(run.hasAttribute('disabled')).toBe(false);

@@ -5,7 +5,7 @@ import { gameDebug, openFair } from './helpers';
 
 // The steps and assertions of the `Playwright journeys` table of paired-comparison-and-release/design.md, row compare.spec.ts.
 async function openCompare(page: Page): Promise<void> {
-  await page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Compare', exact: true }).click();
+  await page.getByRole('navigation', { name: 'Screens' }).getByRole('button', { name: 'Compare', exact: true }).click();
   await expect(page.getByRole('group', { name: 'Screen buttons' }).getByRole('button', { name: 'Back to plan' })).toBeVisible();
 }
 

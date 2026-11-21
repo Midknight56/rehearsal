@@ -163,6 +163,7 @@ export function LandingPreview({ store, client, createView, examples }: LandingP
     <section className="panel landing-preview" aria-labelledby={headingId} data-testid="landing-preview" data-paired={paired}>
       <h2 id={headingId}>Game view</h2>
       <p className="muted">{replayLabel(0)}</p>
+      <p>A sample: the fictional Harbor Hall Community Fair, simulated in this browser when this page opened. Try the community fair opens the same plan for you to change.</p>
       <div className="landing-preview-grid">
         <div className="landing-replay" data-landing-part="replay">
           <div className="game-wrapper landing-canvas" role="img" aria-label="Replay of the Harbor Hall community fair" aria-describedby={descriptionId} data-testid="landing-canvas">

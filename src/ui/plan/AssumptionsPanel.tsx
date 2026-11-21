@@ -20,6 +20,10 @@ export const ASSUMPTIONS = [
   'The output of a run is a scenario result under these assumptions for one seed and one replication: scenario results, not a forecast.',
 ] as const;
 
+/** Plain words for the two terms of the panel a first-time reader stops at. */
+export const ASSUMPTIONS_PLAIN = 'FIFO means first in, first out: people are served in the order they joined the line. Servers are the staff at a station.';
+export const HASH_PLAIN = 'The scenario hash is a fingerprint of the plan: any change to the tables, the floor plan or the scenario settings gives a new one, so a result that shows the same hash came from this exact plan. Title and notes do not change it.';
+
 export const LIMITS_TEXT =
   `Limits: at most ${LIMITS.maxAttendees.toLocaleString('en-US')} attendees, ${LIMITS.maxStations} stations, ${LIMITS.maxRouteVisits} station visits per route, ` +
   `${LIMITS.maxCols} × ${LIMITS.maxRows} cells, a ${LIMITS.maxHorizonMs / 60_000}-minute observation window, servers ${LIMITS.minServers} to ${LIMITS.maxServers}, 10 saved scenarios, a 2 MiB import file.`;
@@ -42,11 +46,13 @@ export function AssumptionsPanel({ store }: { store: EditorStore }): ReactElemen
           <li key={line}>{line}</li>
         ))}
       </ul>
+      <p className="muted column-note">{ASSUMPTIONS_PLAIN}</p>
       <p>{LIMITS_TEXT}</p>
       {warnings.map((w) => (
         <p key={w.code} className="field-error">{w.message}</p>
       ))}
       <p className="hash">{`Scenario hash: ${hash ?? 'computing…'}`}</p>
+      <p className="muted column-note">{HASH_PLAIN}</p>
       <p>{`Model version: ${scenario.modelVersion}`}</p>
       <p>{`Seed: ${scenario.baseSeed}`}</p>
       <p>{`Horizon: ${scenario.horizonMs / 60_000} min`}</p>

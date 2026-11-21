@@ -66,9 +66,11 @@ export async function keyboardJourney(page: Page): Promise<void> {
   await backTabTo(page, 'Compare', { checkFocus: true });
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { level: 1, name: 'Compare scenarios' })).toBeFocused();
-  await tabTo(page, `Use as baseline: ${title}`, { checkFocus: true });
+  // Since the blind test fixes (2026-11-20) the first tab and the next one are preselected; the keyboard still picks both.
+  const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  await tabTo(page, new RegExp(`^(Use as baseline|Baseline): ${escaped}$`), { checkFocus: true });
   await page.keyboard.press('Enter');
-  await tabTo(page, 'Use as candidate: Harbor Hall Community Fair: extra check-in staff', { checkFocus: true });
+  await tabTo(page, /^(Use as candidate|Candidate): Harbor Hall Community Fair: extra check-in staff$/, { checkFocus: true });
   await page.keyboard.press('Enter');
   await tabTo(page, 'Run comparison', { checkFocus: true });
   await page.keyboard.press('Enter');

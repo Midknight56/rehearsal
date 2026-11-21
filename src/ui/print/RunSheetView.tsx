@@ -11,9 +11,10 @@ import { NoBreak } from '../noBreak';
 
 function SheetTable({ spec, rows }: { spec: { title: string; columns: readonly string[] }; rows: RunSheetRow[] }): ReactElement {
   return (
-    <div className="table-scroll" role="group" aria-label={` table`} tabIndex={0}>
-    <table>
-      <caption>{spec.title}</caption>
+    <div className="table-scroll" role="group" aria-label={`${spec.title} table`} tabIndex={0}>
+    <table className="stack">
+      {/* The section heading above shows the title; the caption keeps the table named for a screen reader. */}
+      <caption className="visually-hidden">{spec.title}</caption>
       <thead>
         <tr>
           {spec.columns.map((column) => (
@@ -26,13 +27,27 @@ function SheetTable({ spec, rows }: { spec: { title: string; columns: readonly s
           <tr key={row.head}>
             <th scope="row">{row.head}</th>
             {row.cells.map((cell, i) => (
-              <td key={`${row.head}|${spec.columns[i + 1] ?? i}`}>{cell}</td>
+              <td key={`${row.head}|${spec.columns[i + 1] ?? i}`} data-label={spec.columns[i + 1]}>{cell}</td>
             ))}
           </tr>
         ))}
       </tbody>
     </table>
     </div>
+  );
+}
+
+/** The hash line in four unbroken 16 character pieces, so on a phone it wraps between pieces instead of running off the sheet; its text is unchanged. */
+function HashLine({ text }: { text: string }): ReactElement {
+  const m = /^(.*?)([0-9a-f]{64})(.*)$/s.exec(text);
+  if (m === null) return <p className="hash-line">{text}</p>;
+  const hash = m[2] as string;
+  return (
+    <p className="hash-line">
+      {m[1]}
+      {[0, 16, 32, 48].map((i) => <span key={i} className="hash-part">{hash.slice(i, i + 16)}</span>)}
+      {m[3]}
+    </p>
   );
 }
 
@@ -64,7 +79,7 @@ export function RunSheetView({ model, results }: { model: RunSheetModel; results
       <p data-testid="run-sheet-results"><NoBreak text={results} /></p>
       <section id="assumptions" aria-label={ASSUMPTIONS_TITLE}>
         <h2>{ASSUMPTIONS_TITLE}</h2>
-        <p className="hash-line" role="group" aria-label="Scenario hash line" tabIndex={0}>{scenarioHashLine(model)}</p>
+        <HashLine text={scenarioHashLine(model)} />
         <p><NoBreak text={modelVersionText(model)} /></p>
         <ul aria-label="Model assumptions">
           {model.assumptions.map((line) => (
